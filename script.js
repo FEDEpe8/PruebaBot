@@ -765,19 +765,15 @@ function addMessage(text, side = 'bot', options = null) {
         row.appendChild(optDiv);
     }
     
-    container.appendChild(row);
+  container.appendChild(row);
     
-    // Scroll suave al nuevo mensaje con delay para asegurar renderizado
-    setTimeout(() => {
-        row.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 100);
-    
-    // Scroll adicional si hay botones para asegurar que sean visibles
-    if (options) {
-        setTimeout(() => {
-            container.scrollTop = container.scrollHeight;
-        }, 300);
-    }
+   setTimeout(() => {
+        // Opción A: Scroll al elemento (mejor comportamiento)
+        row.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        
+        // Opción B: Forzar el scroll al fondo del contenedor matemático
+        container.scrollTop = container.scrollHeight;
+    }, 100););
 }
 
 /* --- FRASES DE RESPUESTA POSITIVA --- */
