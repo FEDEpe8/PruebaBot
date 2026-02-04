@@ -1,0 +1,21 @@
+{
+  "name": "Muni Chascomús",
+  "short_name": "MuniChat",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#e5ddd5",
+  "theme_color": "#0072bc",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

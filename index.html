@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>MuniBot Chascomús - Asistente Virtual</title>
+    <meta name="theme-color" content="#004a7c">
+    <meta name="description" content="Asistente Virtual Oficial de la Municipalidad de Chascomús. Información sobre trámites, salud, seguridad y servicios.">
+    <meta name="author" content="Municipalidad de Chascomús - Área de Sistemas">
+    <meta name="copyright" content="© 2026 Municipalidad de Chascomús">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+    
+    <!-- Preconnect para performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Seguridad: CSP básico -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://wa.me; frame-src https://www.google.com;">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-brand">
+            <img src="logo.png" alt="Logo Municipalidad" class="header-logo" loading="eager">
+            <div class="header-text">
+                <h1 class="header-title">MuniBot</h1>
+                <span class="header-subtitle">Chascomús</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon" onclick="app.toggleInfo()" aria-label="Información">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </button>
+            <button class="btn-icon" onclick="app.clearSession()" aria-label="Cerrar sesión">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Área principal de chat -->
+    <main id="chatContainer" class="chat-container" role="log" aria-live="polite" aria-label="Conversación con MuniBot">
+        <!-- Los mensajes se insertan aquí dinámicamente -->
+    </main>
+
+    <!-- Indicador de escritura -->
+    <div id="typingIndicator" class="typing-indicator hidden">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- Barra de input -->
+    <footer class="input-area" id="inputBar">
+        <div class="input-wrapper">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Escribe tu consulta..." 
+                autocomplete="off"
+                aria-label="Mensaje"
+                maxlength="500"
+            >
+            <button id="sendButton" class="btn-send" aria-label="Enviar mensaje">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal de información -->
+    <div id="infoModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <button class="modal-close" onclick="app.toggleInfo()" aria-label="Cerrar">×</button>
+            <h2 id="modalTitle" class="modal-title">Sobre MuniBot</h2>
+            <div class="modal-body">
+                <p>Este asistente virtual te ayuda a encontrar información sobre trámites, salud, deportes, reclamos y más de forma rápida y sencilla.</p>
+                <p>Utilizá los botones del menú para navegar por las distintas secciones o escribí palabras clave como "farmacia", "turno", "poda", etc.</p>
+            </div>
+            <div class="modal-footer">
+                <p class="copyright">© 2026 Municipalidad de Chascomús
+                    Federico de Sistemas
+                </p>
+                <p class="credit" id="authorCredit"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
