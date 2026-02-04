@@ -164,7 +164,6 @@ const MENUS = {
         ]
     },
     
-    /* --- REEMPLAZAR ESTA SECCIÓN EN 'MENUS' --- */
     produccion: {
         title: () => '🏭 Producción y Empleo:',
         options: [
@@ -177,7 +176,6 @@ const MENUS = {
         ]
     },
 
-    /* --- AGREGAR ESTOS NUEVOS SUBMENÚS AL FINAL DE 'MENUS' --- */
     prod_eco_social: {
         title: () => '🟢 Economía Social:',
         options: [
@@ -765,15 +763,19 @@ function addMessage(text, side = 'bot', options = null) {
         row.appendChild(optDiv);
     }
     
-  container.appendChild(row);
+    container.appendChild(row);
     
-   setTimeout(() => {
-        // Opción A: Scroll al elemento (mejor comportamiento)
-        row.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-        
-        // Opción B: Forzar el scroll al fondo del contenedor matemático
+    // Scroll actualizado para Flexbox (evita que se tape el contenido)
+    setTimeout(() => {
         container.scrollTop = container.scrollHeight;
-    }, 100););
+    }, 100);
+    
+    // Scroll adicional si hay botones para asegurar que sean visibles
+    if (options) {
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 300);
+    }
 }
 
 /* --- FRASES DE RESPUESTA POSITIVA --- */
@@ -874,15 +876,10 @@ function showNavControls() {
     `;
     container.appendChild(div);
     
-    // Scroll suave para mostrar los botones de navegación
-    setTimeout(() => {
-        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 100);
-    
-    // Scroll adicional para asegurar visibilidad completa
+    // Scroll actualizado para botones de navegación
     setTimeout(() => {
         container.scrollTop = container.scrollHeight;
-    }, 300);
+    }, 100);
 }
 
 /* --- FORMULARIO 147 --- */
