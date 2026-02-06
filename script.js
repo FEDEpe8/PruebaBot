@@ -5,6 +5,28 @@ let isAwaitingForm = false;
 let currentFormStep = 0;
 let formData = { tipo: "", ubicacion: "", descripcion: "" };
 
+/* --- ESTADÍSTICAS (Google Sheets) --- */
+// ⚠️ IMPORTANTE: PEGA AQUÍ TU URL DE APPS SCRIPT
+const STATS_URL = "https://script.google.com/macros/s/AKfycbyv6W175qMpbqVUsg0ETM2SOtkdUPsoAUHG3XnaiIjgMFmEnDr7FeVGcyr9dl9AfHB0/exec";
+
+function registrarEvento(accion, detalle) {
+    if (!STATS_URL || STATS_URL.includes("TUS_LETRAS_RARAS_AQUI")) return;
+
+    const datos = {
+        usuario: userName || "Anónimo",
+        accion: accion,
+        detalle: detalle
+    };
+
+    // 'no-cors' permite enviar datos sin esperar respuesta (fire and forget)
+    fetch(STATS_URL, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+    }).catch(err => console.error("Error stats:", err));
+}
+
 /* --- MENÚS --- */  
 const MENUS = {
     main: { 
@@ -14,6 +36,7 @@ const MENUS = {
             { id: 'politicas_comu', label: '🛍️ Módulos (alimentos)', type: 'leaf', apiKey: 'asistencia_social' },
             { id: 'desarrollo_menu', label: '🤝 Desarrollo Social' },
             { id: 'sibon', label: '📰 Boletin Oficial' },
+            { id: 'ojos en_alerta', label: '👁️ Ojos en Alerta (Seguridad)', type: 'leaf', apiKey: 'ojos_en_alerta' },
             { id: 'el_digital', label: '📰 Diario digital' },
             { id: 'turismo', label: '🏖️ Turismo' },
             { id: 'deportes', label: '⚽ Deportes' },
@@ -29,6 +52,14 @@ const MENUS = {
             { id: 'contacto_op', label: '☎️ Hablar con Operador', type: 'leaf', apiKey: 'contacto_gral' }
         ]
     },
+
+    ojos_en_alerta: {
+        title: () => '👁️ Ojos en Alerta:',
+        options: [
+            { id: 'oea_link', label: '🔗 Contacto WhatsApp', link: 'https://wa.me/5492241557444' },
+        ]
+    },
+
     cultura: {
         title: () => '🎭 Agenda Cultural:',
         options: [
@@ -128,17 +159,21 @@ const MENUS = {
             { id: 'lic_tramite', label: '🪪 Licencia (Carnet)', type: 'leaf', apiKey: 'lic_turno' },
             { id: 'seg_academia', label: '🚗 Academia Conductores', type: 'leaf', apiKey: 'seg_academia' },
             { id: 'seg_infracciones', label: '⚖️ Mis Infracciones', type: 'leaf', apiKey: 'seg_infracciones' },
-            { id: 'ojos', label: '👁️ Ojos en Alerta', type: 'leaf', apiKey: 'ojos' },
-            { id: 'poli', label: '📞 Comisaría', type: 'leaf', apiKey: 'poli' }
+            { id: 'poli', label: '📞 Monitoreo y Comisaría', type: 'leaf', apiKey: 'poli' }
         ]
     },
-    habilitaciones: { 
-        title: () => 'Hacienda, Tasas y Producción:', 
+
+  habilitaciones: {
+        title: () => 'Gestión de Habilitaciones:',
         options: [
-            { id: 'hab_menu', label: '🏬 Habilitaciones (Menú)', type: 'submenu' }, 
-            { id: 'toma', label: '🌾 Tomasa', type: 'leaf', apiKey: 'hac_tomasa' }
+            { id: 'hab_video', label: '🎥 Ver Video Instructivo', type: 'leaf', apiKey: 'hab_video_info' },
+            { id: 'hab_gral', label: '🏢 Comercio e Industria', type: 'leaf', apiKey: 'hab_gral' },
+            { id: 'hab_eventos', label: '🎉 Eventos y Salones', type: 'leaf', apiKey: 'hab_eventos' },
+            { id: 'hab_espacio', label: '🍔 Patios y Carros (Foodtruck)', type: 'leaf', apiKey: 'hab_espacio' },
+            { id: 'hab_reba', label: '🍷 REBA (Alcohol)', type: 'leaf', apiKey: 'hab_reba' }
         ]
     },
+
     pago_deuda: {
         title: () => 'Pago de Deudas y Boletas:',
         options: [        
@@ -309,7 +344,7 @@ const RES = {
         📞 <b>Teléfono (Línea 147):</b><br>
         Lun a Vie de 8 a 15 horas.<br><br>
         📋 <b>Datos necesarios:</b><br>
-        Nombre, DNI, Teléfono y Dirección del problema.
+        Nombre, DNI, Teléfono, Dirección del problema y adjuntar foto o archivo.
     </div>`,
 
     'caps_mapas': `
@@ -405,8 +440,20 @@ const RES = {
         </a>
     </div>`,
 
-    'mediacion_info': `<div class="info-card"><strong>⚖️ Mediación Comunitaria</strong><br>Resolución pacífica y gratuita de conflictos vecinales (ruidos, mascotas, edilicios).<br>📍 <b>Acercate a:</b> Moreno 259.</div>`,
-    'uda_info': `<div class="info-card"><strong>📍 Puntos UDA (Atención en Barrios)</strong><br><i>Acercate a tu punto más cercano:</i><br><br>🔹 <b>UDA 1 (San Luis):</b> Chubut 755 (Mar/Vie 9-12).<br>🔹 <b>UDA 2 (San José Obrero):</b> F. Chapa 625 (Mar/Vie 9-12).<br>🔹 <b>UDA 3 (El Porteño):</b> Mansilla y Calle 3 (Vie 9-12).<br>🔹 <b>UDA 4 (30 de Mayo):</b> Bvd. 5 y Calle 2 (Vie 9-12).<br>🔹 <b>UDA 5 (B. Jardín):</b> J. Quintana e/ Misiones (Mar/Mié 9-12).<br>🔹 <b>UDA 6 (Gallo Blanco):</b> EE.UU. y Las Flores (Lun 9-12).<br>🔹 <b>UDA 7 (San Cayetano):</b> Comedor (Mar 9-12).<br>🔹 <b>UDA 8 (Políticas Com.):</b> Sarmiento 42 (Lun-Vie 8-12).<br>🔹 <b>UDA 9 (Iporá):</b> Perú y S. Cabral (Jue 9-12).<br><br>🚨 <b>Guardia 24hs:</b> <a href="https://wa.me/5492241559397">2241-559397</a></div>`,
+     'ojos_en_alerta': `
+    <div class="info-card">
+        <strong>👀 OJOS(En alerta)</strong><br>
+        Programa de seguridad ciudadana.<br><br>
+        ⚖️ <b>Denuncias, Robo, Accidentes, Actitudes sospechosas, etc;.:</b><br>
+        Protección de derechos del ciudadano.<br><br>
+        📍 <b>Dirección:</b> Arenales y Julian quintana).<br>
+        ⏰ <b>Horario:</b> Lunes a Lunes 24hs.<br>
+        <a href="https://wa.me/5492241557444">2241-557444</a><br><br>
+       
+    </div>`,
+
+    // Respuestas Seguridad y Trámites
+   
     'pamuv': `<div class="info-card" style="border-left: 5px solid #c0392b;"><strong style="color: #c0392b;">🆘 PAMUV (Asistencia a la Víctima)</strong><br><br>Atención, contención y asesoramiento a personas víctimas de delitos o situaciones de violencia.<br><br>🛡️ <b>Plan Integral de Seguridad 2025-2027</b><br><br>🚨 <b>ATENCIÓN 24 HORAS:</b><br>Línea permanente para emergencias o consultas.<br><a href="https://wa.me/5492241514881" class="wa-btn" style="background-color: #c0392b !important;">📞 2241-514881 (WhatsApp)</a></div>`,
     'defensa_civil': `<div class="info-card" style="border-left: 5px solid #c0392b;">
     <strong style="color: #c0392b;">🌪️ Defensa Civil</strong><br><br>
@@ -433,8 +480,17 @@ const RES = {
     'seg_medido': `<div class="info-card"><strong>🅿️ Estacionamiento Medido</strong><br>Gestioná tu estacionamiento desde el celular.<br><br>📲 <b>Descargar App:</b><br>🤖 <a href="https://play.google.com/store/apps/details?id=ar.edu.unlp.sem.mobile.chascomus" target="_blank">Android (Google Play)</a><br>🍎 <a href="https://apps.apple.com/ar/app/sem-mobile/id1387705895" target="_blank">iPhone (App Store)</a><br><br>💻 <a href="https://chascomus.gob.ar/estacionamientomedido/" target="_blank">Gestión vía Web</a></div>`,
     'lic_turno': `<b>📅 Turno Licencia:</b><br>🔗 <a href="https://apps.chascomus.gob.ar/academia/">SOLICITAR TURNO</a>`, 
     'seg_infracciones': `<b>⚖️ Infracciones:</b><br>🔗 <a href="https://chascomus.gob.ar/municipio/estaticas/consultaInfracciones">VER MIS MULTAS</a>`, 
-    'ojos': `👁️ <b>Ojos en Alerta:</b> <a href="https://wa.me/5492241557444">2241-557444</a>`,
-    'poli': `📞 <b>Policía:</b> 42-2222 | 🎥 <b>COM:</b> 43-1333`,
+
+    'poli': `
+    <div class="info-card">
+        <strong>🎥 (MONITOREO)</strong><br><br>
+        Secretaría de Seguridad Ciudadana y el Centro de Monitoreo.<br><br>
+        ☎️ <b>:Para comunicarte</b><br>
+        <a href="tel:43-1333" class="wa-btn" style="background-color:#25D366 !important; text-align:center;">📞 43-1333</a><br>
+        <small><i>⚠️ Solo emergencias.</i></small><br><br>
+         🚔 <b>POLICIA:</b><br>
+        Solicitalo a <a href="tel:422222"class="wa-btn" style="background-color:#25D366 !important; text-align:center;">📞 42-2222</a><br><br>`,
+
     'politicas_gen': `<div class="info-card" style="border-left: 5px solid #9b59b6;"><strong style="color: #8e44ad; font-size: 1rem;">💜 Género y Diversidad</strong><br><br><div style="font-size: 0.85rem; margin-bottom: 12px;">🚨 <b>Guardia 24/7:</b> Orientación y acompañamiento en casos de violencia.<br>🧠 <b>Equipo Técnico:</b> Abogadas, psicólogas y trabajadoras sociales.<br>🏠 <b>Hogar de Tránsito:</b> Alojamiento temporal para mujeres en riesgo.<br>🗣️ <b>Varones:</b> Espacio de abordaje y deconstrucción de conductas violentas.<br>👮‍♀️ <b>Articulación:</b> Trabajo conjunto con Comisaría de la Mujer.</div><div style="background: #fdf2ff; padding: 10px; border-radius: 8px; font-size: 0.9rem;">📍 <b>Oficina:</b> Moreno 259 (Lun-Vie 9-14hs)<br>☎️ <b>Fijo Oficina:</b> <a href="tel:02241530448">2241-530448</a><br>🚓 <b>Comisaría Mujer:</b> <a href="tel:02241422653">42-2653</a></div><a href="https://wa.me/5492241559397" target="_blank" class="wa-btn" style="background-color: #8e44ad !important;">🚨 GUARDIA 24HS (WhatsApp)</a></div>`,
     
     /* --- TARJETA NUEVA: MÓDULOS ALIMENTARIOS (Estilo destacado) --- */
@@ -465,17 +521,27 @@ const RES = {
         </a>
     </div>`,
     
-    'ninez': `<b>👶 Niñez:</b> Mendoza Nº 95. 📞 43-1146.`,
-    'poda': `🌿 <a href="https://apps.chascomus.gob.ar/podaresponsable/solicitud.php">Solicitud Poda</a>`,
-    'obras_basura': `♻️ <b>Recolección:</b><br>Lun a Sáb 20hs (Húmedos)<br>Jueves 14hs (Reciclables)`,
-    
-    'hac_tomasa': `<b>🤖 Hacienda Tomasa:</b><br>Portal de autogestión.<br>🔗 <a href="https://tomasa.chascomus.gob.ar/">INGRESAR</a>`, 
+    // --- SALUD Y BIENESTAR SOCIAL --- //
+    'ninez': `<div class="info-card"><strong>👶 Niñez:</b> Mendoza Nº 95. 📞 43-1146.`,
+    'mediacion_info': `<div class="info-card"><strong>⚖️ Mediación Comunitaria</strong><br>Resolución pacífica y gratuita de conflictos vecinales (ruidos, mascotas, edilicios).<br>📍 <b>Acercate a:</b> Moreno 259.</div>`,
+    'uda_info': `<div class="info-card"><strong>📍 Puntos UDA (Atención en Barrios)</strong><br><i>Acercate a tu punto más cercano:</i><br><br>🔹 <b>UDA 1 (San Luis):</b> Chubut 755 (Mar/Vie 9-12).<br>🔹 <b>UDA 2 (San José Obrero):</b> F. Chapa 625 (Mar/Vie 9-12).<br>🔹 <b>UDA 3 (El Porteño):</b> Mansilla y Calle 3 (Vie 9-12).<br>🔹 <b>UDA 4 (30 de Mayo):</b> Bvd. 5 y Calle 2 (Vie 9-12).<br>🔹 <b>UDA 5 (B. Jardín):</b> J. Quintana e/ Misiones (Mar/Mié 9-12).<br>🔹 <b>UDA 6 (Gallo Blanco):</b> EE.UU. y Las Flores (Lun 9-12).<br>🔹 <b>UDA 7 (San Cayetano):</b> Comedor (Mar 9-12).<br>🔹 <b>UDA 8 (Políticas Com.):</b> Sarmiento 42 (Lun-Vie 8-12).<br>🔹 <b>UDA 9 (Iporá):</b> Perú y S. Cabral (Jue 9-12).<br><br>🚨 <b>Guardia 24hs:</b> <a href="https://wa.me/5492241559397">2241-559397</a></div>`,
+   
+    // --- OBRAS PÚBLICAS Y ATENCIÓN AL VECINO --- //
 
-
-    'boleta': `<div class="info-card"><strong>📧 BOLETA DIGITAL</strong><br>🟢 WA: <a href="https://wa.me/5492241557616">2241-557616</a><br>📧 <a href="mailto:ingresospublicos@chascomus.gob.ar">Email</a></div>`,
-    'agua': `<b>💧 Consumo de Agua:</b><br>🔗 <a href="https://apps.chascomus.gob.ar/caudalimetros/consulta.php">VER MI CONSUMO</a>`, 
-    'deuda': `<b>🔍 Consulta de Deuda:</b><br>🔗 <a href="https://chascomus.gob.ar/municipio/estaticas/consultaDeudas">CONSULTAR AQUÍ</a>`,
+    'poda': `<div class="info-card"><strong>🌿 Ingresa en este link 👇🏼</strong><br>🔗 <a href="https://apps.chascomus.gob.ar/podaresponsable/solicitud.php">🌳 Solicitud Poda</a></div>`,
+    'obras_basura': `<div class="info-card"><strong>♻️ Recolección de residuos</strong><br>Lun a Sáb 20hs (Húmedos)</strong><br>Jueves 14hs (Reciclables)`,
     
+    // --- TRÁMITES Y SERVICIOS MUNICIPALES --- //
+
+    'hac_tomasa': `<div class="info-card"><strong>🌾 TOMASA:</b><br>ℹ️ Portal de autogestión.<br>🔗 <a href="https://tomasa.chascomus.gob.ar/">INGRESAR</a>`,
+    'boleta': `<div class="info-card"><strong>📧 BOLETA DIGITAL</strong><br>🟢 <i>Para inscribirse comomunicarce por estas vias</a><br> 
+    📲: <a href="https://wa.me/5492241557616">2241-557616</a><br>📧 <a href="mailto:ingresospublicos@chascomus.gob.ar">Email</a></div>`,
+    'agua': `<div class="info-card"><strong>💧 CONSUMO DE AGUA</strong><br> ℹ️ Para conocer y pagar su consumo ingrese a este Link</b><br>
+    🔗 <a href="https://apps.chascomus.gob.ar/caudalimetros/consulta.php">VER MI CONSUMO</a>`, 
+    'deuda': `<div class="info-card"><strong>🔍 CONSULTA DE DEUDA</strong><br>💸 Para ver sus inpuesto Inmobiliarios, Automotores, etc;.<br>
+    🔗 <a href="https://chascomus.gob.ar/municipio/estaticas/consultaDeudas">CONSULTAR AQUÍ</a>`,
+     
+    /* --- HABILITACIÓN COMERCIAL / INDUSTRIAL GENERAL --- */
     'hab_gral': `
     <div class="info-card">
         <strong>🏢 Habilitación Comercial / Industrial</strong><br><br>
@@ -490,6 +556,19 @@ const RES = {
         🚀 <a href="https://apps.chascomus.gob.ar/habilitaciones/habilitacionComercial.php" target="_blank" class="wa-btn">INICIAR TRÁMITE ONLINE</a>
     </div>`,
 
+     'hab_video_info': `
+    <div class="info-card">
+        <strong>🎥 Guía de Habilitaciones</strong><br><br>
+        <video width="100%" height="auto" controls style="border-radius: 8px; border: 1px solid #ddd;">
+            <source src="videos/tutorial_habilitacion.mp4" type="video/mp4">
+            Tu navegador no soporta el video.
+        </video>
+        <br><br>
+        <p style="font-size: 0.85rem; color: #555;">
+            Mirá este breve tutorial sobre cómo iniciar tu trámite de habilitación comercial 100% online.
+        </p>
+    </div>`,
+    /* --- HABILITACIÓN EVENTOS Y ESPACIO PÚBLICO --- */
     'hab_eventos': `
     <div class="info-card">
         <strong>🎉 Eventos y Salones de Fiesta</strong><br>
@@ -503,6 +582,7 @@ const RES = {
         📝 <a href="https://apps.chascomus.gob.ar/habilitaciones/habilitacionEventoPrivado2.0.php" target="_blank">IR AL FORMULARIO</a>
     </div>`,
 
+    /* --- HABILITACIÓN ESPACIO PÚBLICO (FOODTRUCKS Y PATIOS) --- */
     'hab_espacio': `
     <div class="info-card">
         <strong>🍔 Uso de Espacio Público</strong><br>
@@ -516,6 +596,7 @@ const RES = {
         📝 <a href="https://apps.chascomus.gob.ar/habilitaciones/habilitacionCarro.php" target="_blank">SOLICITAR PERMISO</a>
     </div>`,
 
+    /* --- HABILITACIÓN REBA (REGISTRO DE ALCOHOL) --- */
   'hab_reba': `
     <div class="info-card">
         <strong>🍷 Registro de Alcohol (REBA)</strong><br><br>
@@ -528,8 +609,13 @@ const RES = {
         🏦 <b>Pago:</b> Recibirás una boleta para abonar en Banco Provincia.
     </div>`,
     
-    'h_turnos': `<strong>📅 Turnos Hospital:</strong><br>WhatsApp: <a href="https://wa.me/5492241466977">2241-466977</a>`,
-    'h_info': `📍 <b>Hospital Municipal:</b> Av. Alfonsín e Yrigoyen.<br>🚨 Guardia 24 hs.`,
+    /* --- RESPUESTAS HOSPITAL MUNICIPAL --- */
+    'h_turnos': `
+    <div class="info-card">
+        <strong>📅 Turnos Hospital</strong><br>WhatsApp: <a href="https://wa.me/5492241466977">📲 2241-466977</a>`,
+    'h_info':  `
+    <div class="info-card">
+        <strong>📍 <b>Hospital Municipal:</b> Av. Alfonsín e Yrigoyen.<br>🚨 Guardia 24 hs.`,
     
     /* --- ESPECIALIDADES HOSPITAL (NUEVO ORDEN: Especialidad -> Día) --- */
     'info_pediatria': `
@@ -607,8 +693,7 @@ const RES = {
         <a href="https://wa.me/5492241466977" target="_blank" class="wa-btn">📅 SOLICITAR TURNO</a>
     </div>`,
     
-   /* --- AGREGAR AL OBJETO 'RES' --- */
-
+    // Respuestas Dirección de Producción
     /* 🟢 ECONOMÍA SOCIAL */
     'res_compre_chascomus': `
     <div class="info-card">
@@ -620,6 +705,7 @@ const RES = {
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSfa4LPccR6dYwkQFWhG31HELnaKMCSgUF7Jqy1xfiSNR_fA_g/viewform" target="_blank" class="wa-btn">📝 FORMULARIO DE INSCRIPCIÓN</a>
     </div>`,
 
+/* 🟡 PRODUCCIÓN AGROPECUARIA */
     'res_prod_frescos': `
     <div class="info-card">
         <strong>🥦 Orientación Productores Alimentos Frescos</strong><br><br>
@@ -638,6 +724,7 @@ const RES = {
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSfl7uzaIU0u8G-S3uTjtddZl7y4o5jajZUzNuftZEyfqPdDKg/viewform" target="_blank" class="wa-btn">📝 CARGAR MI CV / DATOS</a>
     </div>`,
 
+    /* 🟣 OFICINA DE EMPLEO - PROGRAMAS */
     'res_oe_promover': `
     <div class="info-card">
         <strong>♿ Programa Nacional Promover</strong><br><br>
@@ -646,6 +733,7 @@ const RES = {
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSdGoPi4Xmg0zD2VtBzTr1sFol1QtLAM5G0oDA6vExM_cvIYbQ/viewform" target="_blank" class="wa-btn">📝 INSCRIPCIÓN PROMOVER</a>
     </div>`,
 
+    /* 🟣 OFICINA DE EMPLEO - TALLERES */
     'res_oe_taller_cv': `
     <div class="info-card">
         <strong>📄 Armado de CV y Búsqueda de Empleo</strong><br><br>
@@ -673,6 +761,7 @@ const RES = {
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSdOeVRsshYtc8JF-sTXyEqQgJl2hyTbxyfDPb0G7SsiGBMj_g/viewform" target="_blank" class="wa-btn">📝 PUBLICAR PUESTO</a>
     </div>`,
 
+    /* 🟣 EMPLEADORES - EMPRESAS MADRINAS */
     'res_empl_madrinas': `
     <div class="info-card">
         <strong>🤝 Programa Formando Red - Empresas Madrinas</strong><br><br>
@@ -691,6 +780,7 @@ const RES = {
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSctX7eGQxBNei5howcIjXhIzlBTKQQb_RIBImnKXjVPvIVrvw/closedform" target="_blank" class="wa-btn">📝 INSCRIPCIÓN AL CURSO</a>
     </div>`,
 
+    /* 🔴 CONTACTO PRODUCCIÓN */
      'prod_contacto': `
     <div class="info-card">
         <strong>📍 Dirección de Producción</strong><br><br>
@@ -701,6 +791,7 @@ const RES = {
         Orientación a productores de alimentos frescos, PYMES y cooperativas, impulsando la economía social y la agricultura familiar.
     </div>`,
 
+    /* ☎️ CONTACTO GENERAL MUNICIPAL --- */
         'contacto_gral': `<div class="info-card">
     <strong>🏛️ Contacto Municipalidad</strong><br>
     <i>Canales de atención directa:</i><br><br>
@@ -789,7 +880,12 @@ const FRASES_RESPUESTA = [
     "¡Buena opción! Vamos a ver... 🔍",
     "¡Eso me gusta! Procedamos... 💪",
     "¡Fantástico! Un momento... ⏳",
-    "¡Muy buena elección! 🌟"
+    "¡Muy buena elección! 🌟",
+    "¡Excelente! Vamos a ello... 🛠️",
+    "¡Perfecto! Estoy en eso... 🤖",
+    "¡Genial! Vamos a ver qué encontramos... 🔎",
+    "¡Muy bien! Estoy trabajando en eso... ⚙️",
+    "¡Buena elección! Vamos a ello... 🚀"
 ];
 
 function getFraseAleatoria() {
@@ -797,7 +893,12 @@ function getFraseAleatoria() {
 }
 
 function handleAction(opt) {
+    // --- NUEVO: REGISTRO DE CLICK ---
+    registrarEvento("Click Botón", opt.label || opt.id);
+    // --------------------------------
+
     if (opt.id === 'nav_home') return resetToMain();
+    
     if (opt.id === 'nav_back') {
         if (currentPath.length > 1) {
             currentPath.pop();
@@ -899,7 +1000,10 @@ function processFormStep(text) {
         formData.ubicacion = text;
         currentFormStep = 3;
         setTimeout(() => addMessage("🖊️ <b>Paso 3/3:</b> Breve descripción del problema.", 'bot'), 500);
+        formData.descripcion = text;
     } else if (currentFormStep === 3) {
+         setTimeout(() => addMessage("🖊️ <b>Paso 4/4:</b> Si puede adjunte una foto o archivo.", 'bot'), 500);
+    } else if (currentFormStep === 4) {
         formData.descripcion = text;
         finalizeForm();
     }
@@ -908,7 +1012,7 @@ function processFormStep(text) {
 function finalizeForm() {
     isAwaitingForm = false;
     toggleInput(false);
-    const tel147 = "5492241559397"; 
+    const tel147 = "5492241514700"; 
     
     const msg = `🏛️ *RECLAMO 147* 🏛️\n👤 *Vecino:* ${userName}\n🏷️ *Tipo:* ${formData.tipo}\n📍 *Ubicación:* ${formData.ubicacion}\n📝 *Desc:* ${formData.descripcion}`;
     const url = `https://wa.me/${tel147}?text=${encodeURIComponent(msg)}`;
@@ -929,6 +1033,10 @@ function processInput() {
     const input = document.getElementById('userInput');
     const val = input.value.trim();
     if(!val) return;
+    
+    // --- NUEVO: REGISTRO DE TEXTO ---
+    registrarEvento("Consulta Escrita", val);
+    // --------------------------------
 
     const texto = val.toLowerCase();
 
@@ -940,7 +1048,7 @@ function processInput() {
             Este sistema fue diseñado y programado por:<br>
             <b>Federico de Sistemas</b><br>
             <i>Municipalidad de Chascomús</i><br>
-            © 2024 - Todos los derechos reservados.
+            © 2026 - Todos los derechos reservados.
         </div>`;
         addMessage(val, 'user');
         setTimeout(() => addMessage(firma, 'bot'), 500);
@@ -970,6 +1078,7 @@ function processInput() {
         O simplemente la palabra "MENU" para ver todo 🤖`, 'bot');
             
             const atajos = [
+                { id: 'oea_link', label: '👀 Ojos en Alerta', type: 'leaf', apiKey: 'ojos_en_alerta' },
                 { id: 'ag_actual', label: '🎭 Agenda Cultural', type: 'leaf', apiKey: 'agenda_actual' },
                 { id: 'f_lista', label: '💊 Farmacias de Turno', type: 'leaf', apiKey: 'farmacias_lista' },
                 { id: 'h_tur', label: '📅 Turnos Hospital', type: 'leaf', apiKey: 'h_turnos' },
@@ -1008,7 +1117,7 @@ function processInput() {
     }
 
     // 4. INSULTOS (Filtro de educación)
-    if (['boludo', 'tonto', 'inutil', 'mierda', 'puto' , 'forro' , 'estupido'].some(palabra => texto.includes(palabra))) {
+    if (['boludo', 'tonto', 'inutil', 'mierda', 'puto' , 'forro' , 'estupido' , 'tarado'].some(palabra => texto.includes(palabra))) {
         setTimeout(() => addMessage("Por favor, mantengamos el respeto. Soy un robot intentando ayudar. 🤖💔", 'bot'), 600);
         return;
     }
@@ -1021,29 +1130,56 @@ function processInput() {
         'cultural':   { type: 'leaf', apiKey: 'agenda_actual', label: '🎭 Agenda Cultural' },
         'teatro':     { type: 'leaf', apiKey: 'agenda_actual', label: '🎭 Agenda Cultural' },
         'turno':      { type: 'leaf', apiKey: 'h_turnos', label: '📅 Turnos Hospital' },
+        'especialidad':{ type: 'leaf', apiKey: 'h_turnos', label: '📅 Turnos Hospital' },
+        'medico':     { type: 'leaf', apiKey: 'h_turnos', label: '📅 Turnos Hospital' },
         'hospital':   { id: 'hospital_menu', label: '🏥 Menú Hospital' }, 
         '147':        { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
         'reclamo':    { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
         'luz':        { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
+        'foco':       { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
+        'bache':      { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
+        'perdida':     { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
+        'caño':       { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
+        'ramas':      { type: 'leaf', apiKey: 'link_147', label: '📝 Reclamos 147' },
         'basura':     { type: 'leaf', apiKey: 'obras_basura', label: '♻️ Recolección' },
         'contenedor': { type: 'leaf', apiKey: 'obras_basura', label: '♻️ Recolección' },
         'reciclo':    { type: 'leaf', apiKey: 'obras_basura', label: '♻️ Recolección' },
+        'recoleccion': { type: 'leaf', apiKey: 'obras_basura', label: '♻️ Recolección' },
         'poda':       { type: 'leaf', apiKey: 'poda', label: '🌿 Poda' },
-        'deporte':    { id: 'deportes', label: '⚽ Deportes' },           
+        'arbol':      { type: 'leaf', apiKey: 'poda', label: '🌿 Poda' },
+        'deporte':    { id: 'deportes', label: '⚽ Deportes' },  
+        'futbol':     { id: 'deportes', label: '⚽ Deportes' },
+        'canchas':    { id: 'deportes', label: '⚽ Deportes' },
+        'natacion':   { id: 'deportes', label: '⚽ Deportes' },
+        'piscina':    { id: 'deportes', label: '⚽ Deportes' },
+        'turismo':    { id: 'turismo', label: '🏖️ Turismo' },
+        'turista':    { id: 'turismo', label: '🏖️ Turismo' },
         'turismo':    { id: 'turismo', label: '🏖️ Turismo' },            
-        'reba_hab':   { type: 'leaf', apiKey: 'hab_reba', label: '🍷 REBA' },
+        'reba':       { type: 'leaf', apiKey: 'hab_reba', label: '🍷 REBA' },
+        'alcohol':    { type: 'leaf', apiKey: 'hab_reba', label: '🍷 REBA' },
         'licencia':   { type: 'leaf', apiKey: 'lic_turno', label: '🪪 Licencias' },
         'carnet':     { type: 'leaf', apiKey: 'lic_turno', label: '🪪 Licencias' },
+        'carnet':     { type: 'leaf', apiKey: 'lic_turno', label: '🪪 Licencias' },
         'castracion': { type: 'leaf', apiKey: 'zoo_rabia', label: '🐾 Zoonosis' },
+        'vacunacion': { type: 'leaf', apiKey: 'vacunacion_info', label: '💉 Vacunación' },
         'vacuna':     { type: 'leaf', apiKey: 'vacunacion_info', label: '💉 Vacunación' },
         'empleo':     { type: 'leaf', apiKey: 'prod_empleo', label: '👷 Empleo' },
         'emprende':   { id: 'produccion_menu', label: '👷 Producción y Empleo' }, 
         'caps':       { id: 'centros', label: '🏥 Caps' },
+        'saludmental': { id: 'centros', label: '🏥 Caps' },
+        'salita':     { id: 'centros', label: '🏥 Caps' },
         'salud':      { id: 'salud', label: '🏥 Menú Salud' },         
         'seguridad':  { id: 'seguridad', label: '🛡️ Menú Seguridad' }, 
+        'tormenta':   { type: 'leaf', apiKey: 'defensa_civil', label: '🌪️ Defensa Civil' },
+        'viento':     { type: 'leaf', apiKey: 'defensa_civil', label: '🌪️ Defensa Civil' },
+        'inundacion': { type: 'leaf', apiKey: 'defensa_civil', label: '🌪️ Defensa Civil' },
         'clima':      { type: 'leaf', apiKey: 'defensa_civil', label: '🌪️ Defensa Civil' },
-        'reba':       { type: 'leaf', apiKey: 'hab_reba', label: '🍷 REBA' },
+        'lluvia':     { type: 'leaf', apiKey: 'defensa_civil', label: '🌪️ Defensa Civil' },
+        'emergencia': { type: 'leaf', apiKey: 'defensa_civil', label: '🌪️ Defensa Civil' },
+        'camara':     { type: 'leaf', apiKey: 'poli', label: '📹 Camaras de seguridad' },
+        'camaras':    { type: 'leaf', apiKey: 'poli', label: '📹 Camaras de seguridad' },
         'espacio':    { type: 'leaf', apiKey: 'hab_espacio', label: '🍔 Uso de Espacio Público' },
+        'publico':    { type: 'leaf', apiKey: 'hab_espacio', label: '🍔 Uso de Espacio Público' },
         'evento':     { type: 'leaf', apiKey: 'hab_espacio', label: '🍔 Uso de Espacio Público' },
         'fiesta':     { type: 'leaf', apiKey: 'hab_espacio', label: '🍔 Uso de Espacio Público' },
         'foodtruck':  { type: 'leaf', apiKey: 'hab_espacio', label: '🍔 Uso de Espacio Público' },
@@ -1066,13 +1202,14 @@ function processInput() {
         'oficial':    { id: 'sibon', label: '📰 Boletín Oficial' },
         'diario':     { id: 'el_digital', label: '📰 Diario Digital' },
         'digital':    { id: 'el_digital', label: '📰 Diario Digital' }
+
     };
     
     for (let palabra in diccionario) {
         if (texto.includes(palabra)) { 
             const accion = diccionario[palabra];
             setTimeout(() => {
-                addMessage(`¡Encontré esto sobre <b>"${palabra.toUpperCase()}"</b>! 👇`, 'bot');
+                addMessage(`¡Encontré esto sobre tu consulta <b>"${palabra.toUpperCase()}"</b>! 👇`, 'bot');
                 handleAction(accion);
             }, 600);
             return;
@@ -1126,3 +1263,18 @@ const app = {
 /* --- Mensaje en consola --- */
 console.log("%c⛔ DETENTE", "color: red; font-size: 40px; font-weight: bold;");
 console.log("%cEste código es propiedad intelectual de la Municipalidad de Chascomús.", "font-size: 16px; color: #004a7c;");
+console.log("%cSi alguien te indicó que pegues algo aquí, es una estafa para robarte información o dinero.", "font-size: 14px; color: #000;");
+console.log("%cSi sos desarrollador, podés contactarte con Federico de Sistemas para colaborar en proyectos oficiales.", "font-size: 14px; color: #000;");
+
+
+
+
+
+
+
+
+
+
+
+
+
