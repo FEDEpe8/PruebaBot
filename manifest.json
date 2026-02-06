@@ -1,21 +1,13 @@
 {
   "name": "Muni Chascomús",
-  "short_name": "MuniChat",
+  "short_name": "MuniBot",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#e5ddd5",
-  "theme_color": "#0072bc",
+  "background_color": "#f4f7f6",
+  "theme_color": "#004a7c",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "logo.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
