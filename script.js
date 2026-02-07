@@ -912,7 +912,7 @@ function showMenu(key) {
 function showNavControls() {
     const container = document.getElementById('chatMessages');
     const navDiv = document.createElement('div'); navDiv.className = 'options-container'; 
-    navDiv.innerHTML = `<button class="option-button back" onclick="handleAction({id:'back'})">⬅️ Volver</button>
+    navDiv.innerHTML = `<button class="option-button back" onclick="showMenu(currentPath[currentPath.length - 1])">⬅️ Volver</button>
                         <button class="option-button" onclick="resetToMain()">🏠 Inicio</button>`;
     container.appendChild(navDiv); scrollToBottom();
 }
@@ -1058,5 +1058,5 @@ function toggleInput(show) { document.getElementById('inputBar').style.display =
 function toggleInfo() { document.getElementById('infoModal').classList.toggle('show'); }
 function clearSession() { if(confirm("¿Borrar datos?")) { localStorage.clear(); location.reload(); } }
 
-window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido. Para empezar, ¿cómo es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
+window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido. Para empezar, ¿cual es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
