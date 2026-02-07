@@ -1,5 +1,5 @@
 /* ============================================================
-   MUNICIPALIDAD DE CHASCOMÚS - CHATBOT SCRIPT (V. ATAJOS)
+   MUNICIPALIDAD DE CHASCOMÚS - CHATBOT SCRIPT (FULL DATA)
    ============================================================ */
 
 /* --- 1. CONFIGURACIÓN Y ESTADO --- */
@@ -34,15 +34,29 @@ function registrarEvento(accion, detalle) {
     }).catch(console.error);
 }
 
+/* --- 3. MENÚS (DATA ORIGINAL PRESERVADA + INTEGRACIÓN ATAJOS) --- */  
 const MENUS = {
+    // MENÚ PRINCIPAL: Solo atajos rápidos
     main: { 
         title: (name) => `¡Hola <b>${name}</b>! 👋 Soy MuniBot el asistente virtual de la Municipalidad. ¿Empecemos la recorrida?`, 
+        options: [
+            { id: 'oea_link_shortcut', label: '👀 Ojos en Alerta', type: 'leaf', apiKey: 'ojos_en_alerta' },
+            { id: 'ag_actual_shortcut', label: '🎭 Agenda Cultural', type: 'leaf', apiKey: 'agenda_actual' },
+            { id: 'f_lista_shortcut', label: '💊 Farmacias de Turno', type: 'leaf', apiKey: 'farmacias_lista' },
+            { id: 'h_tur_shortcut', label: '📅 Turnos Hospital', type: 'leaf', apiKey: 'h_turnos' },
+            { id: 'full_menu', label: '☰ VER MENÚ COMPLETO' }
+        ]
+    },
+
+    // MENÚ COMPLETO: Todas las opciones originales del main
+    full_menu: {
+        title: () => '📱 Menú Completo de Servicios Municipales:',
         options: [
             { id: 'politicas_gen', label: '💜 GÉNERO (Urgencias)', type: 'leaf', apiKey: 'politicas_gen' },
             { id: 'politicas_comu', label: '🛍️ Módulos (alimentos)', type: 'leaf', apiKey: 'asistencia_social' },
             { id: 'desarrollo_menu', label: '🤝 Desarrollo Social' },
             { id: 'sibon', label: '📰 Boletin Oficial' },
-            { id: 'ojos en_alerta', label: '👁️ Ojos en Alerta (Seguridad)', type: 'leaf', apiKey: 'ojos_en_alerta' },
+            { id: 'ojos_en_alerta', label: '👁️ Ojos en Alerta (Seguridad)', type: 'leaf', apiKey: 'ojos_en_alerta' },
             { id: 'el_digital', label: '📰 Diario digital' },
             { id: 'turismo', label: '🏖️ Turismo' },
             { id: 'deportes', label: '⚽ Deportes' },
@@ -141,7 +155,6 @@ const MENUS = {
             { id: 'h_guardia', label: '🚨 Guardia e Info', type: 'leaf', apiKey: 'h_info' }
         ]
     },
-    /* --- MENÚ ESPECIALIDADES (INVERTIDO) --- */
     h_espec_menu: {
         title: () => '🩺 Seleccioná la especialidad para ver los días:',
         options: [
@@ -168,8 +181,7 @@ const MENUS = {
             { id: 'poli', label: '📞 Monitoreo y Comisaría', type: 'leaf', apiKey: 'poli' }
         ]
     },
-
-  habilitaciones: {
+    habilitaciones: {
         title: () => 'Gestión de Habilitaciones:',
         options: [
             { id: 'hab_video', label: '🎥 Ver Video Instructivo', type: 'leaf', apiKey: 'hab_video_info' },
@@ -179,7 +191,6 @@ const MENUS = {
             { id: 'hab_reba', label: '🍷 REBA (Alcohol)', type: 'leaf', apiKey: 'hab_reba' }
         ]
     },
-
     pago_deuda: {
         title: () => 'Pago de Deudas y Boletas:',
         options: [        
@@ -188,13 +199,10 @@ const MENUS = {
             { id: 'boleta', label: '📧 Boleta Digital', type: 'leaf', apiKey: 'boleta' }
         ]
     },
-
     omic: { 
         title: () => 'OMIC - Defensa del Consumidor:', 
-        options: [
-             { id: 'omic', label: '📢 OMIC (Defensa Consumidor)', type: 'leaf', apiKey: 'omic_info' },]
+        options: [ { id: 'omic', label: '📢 OMIC (Defensa Consumidor)', type: 'leaf', apiKey: 'omic_info' } ]
     },
-
     hab_menu: {
         title: () => 'Gestión de Habilitaciones:',
         options: [
@@ -204,7 +212,6 @@ const MENUS = {
             { id: 'hab_reba', label: '🍷 REBA (Alcohol)', type: 'leaf', apiKey: 'hab_reba' }
         ]
     },
-    
     produccion: {
         title: () => '🏭 Producción y Empleo:',
         options: [
@@ -216,7 +223,6 @@ const MENUS = {
             { id: 'prod_contacto', label: '📍 Contacto y Dirección', type: 'leaf', apiKey: 'prod_contacto' }
         ]
     },
-
     prod_eco_social: {
         title: () => '🟢 Economía Social:',
         options: [
@@ -224,7 +230,6 @@ const MENUS = {
             { id: 'pe_frescos', label: '🥦 Productores Alimentos Frescos', type: 'leaf', apiKey: 'res_prod_frescos' }
         ]
     },
-
     prod_of_empleo: {
         title: () => '🔵 Oficina de Empleo:',
         options: [
@@ -233,14 +238,10 @@ const MENUS = {
             { id: 'oe_taller_cv', label: '📄 Taller Armado de CV', type: 'leaf', apiKey: 'res_oe_taller_cv' }
         ]
     },
-
     prod_empresas: {
         title: () => '🟠 Empresas y Emprendedores:',
-        options: [
-            { id: 'emp_chasco', label: '🚀 Chascomús Emprende', type: 'leaf', apiKey: 'res_emp_chasco' },
-        ]
+        options: [ { id: 'emp_chasco', label: '🚀 Chascomús Emprende', type: 'leaf', apiKey: 'res_emp_chasco' } ]
     },
-
     prod_empleadores: {
         title: () => '🟣 Empleadores:',
         options: [
@@ -258,7 +259,7 @@ const MENUS = {
     }
 };
 
-/* --- RESPUESTAS (Base de Datos HTML) --- */
+/* --- 4. RESPUESTAS (BASE DE DATOS HTML ORIGINAL) --- */
 const RES = {
     'agenda_actual': `
     <div class="info-card">
@@ -812,9 +813,10 @@ const RES = {
     📍 <b>Mesa de Entradas:</b><br>
     Cr. Cramer 270.</div>`
 };
-
-/* --- 5. MOTOR DE CHAT --- */
-const FRASES_RESPUESTA = ["¡Qué gran elección! 🎯", "¡Excelente selección! ⭐", "¡Perfecto! 👍", "¡Genial! 😊"];
+/* --- 5. MOTOR DE CHAT (FRASES PRESERVADAS) --- */
+const FRASES_RESPUESTA = [
+    "¡Excelente selección! ⭐", "¡Perfecto! 👍", "¡Genial! Te ayudo con eso 😊", "¡Buena opción! 🔍", "¡Excelente elección! 🎯"
+];
 function getFraseAleatoria() { return FRASES_RESPUESTA[Math.floor(Math.random() * FRASES_RESPUESTA.length)]; }
 
 function scrollToBottom() {
@@ -869,7 +871,7 @@ function handleAction(opt) {
 
     if (opt.type === 'form_147') return startReclamoForm();
     
-    // LOGICA DE REGISTRO
+    // REGISTRO DE EDAD
     if (opt.type === 'age_select') {
         userAge = opt.label; localStorage.setItem('muni_user_age', userAge);
         showTyping();
@@ -895,6 +897,7 @@ function handleAction(opt) {
 }
 
 function showMenu(key) {
+    if (document.getElementById('typingIndicator')) removeTyping();
     const menu = MENUS[key];
     const title = typeof menu.title === 'function' ? menu.title(userName) : menu.title;
     let opts = [...menu.options];
@@ -915,7 +918,7 @@ function resetToMain() { currentPath = ['main']; showTyping(); setTimeout(() => 
 /* --- 6. FORMULARIO 147 --- */
 function startReclamoForm() {
     isAwaitingForm = true; currentFormStep = 1; toggleInput(true); 
-    showTyping(); setTimeout(() => addMessage("📝 <b>Paso 1/3:</b> ¿Qué tipo de problema es? (Ej: Luminaria, Basura)", 'bot'), 600);
+    showTyping(); setTimeout(() => addMessage("📝 <b>Paso 1/3:</b> ¿Qué problema es? (Ej: Luminaria, Basura)", 'bot'), 600);
 }
 
 function processFormStep(text) {
@@ -935,8 +938,9 @@ function finalizeForm() {
     showNavControls();
 }
 
-/* --- 7. BUSCADOR INTELIGENTE --- */
- const diccionario = {
+/* --- 7. BUSCADOR INTELIGENTE (DATA PRESERVADA) --- */
+function ejecutarBusquedaInteligente(texto) {
+   const diccionario = {
         'farmacia':   { type: 'leaf', apiKey: 'farmacias_lista', label: '💊 Farmacias' },
         'agenda':     { type: 'leaf', apiKey: 'agenda_actual', label: '🎭 Agenda Cultural' },
         'cultural':   { type: 'leaf', apiKey: 'agenda_actual', label: '🎭 Agenda Cultural' },
@@ -1016,17 +1020,15 @@ function finalizeForm() {
         'digital':    { id: 'el_digital', label: '📰 Diario Digital' }
 
     };
-
-function ejecutarBusqueda(texto) {
     showTyping();
     setTimeout(() => {
-        for (let palabra in DICCIONARIO) {
-            if (texto.includes(palabra)) {
+        for (let palabra in diccionario) {
+            if (texto.includes(palabra)) { 
                 addMessage(getFraseAleatoria(), 'bot');
-                handleAction(DICCIONARIO[palabra]); return;
+                handleAction(diccionario[palabra]); return;
             }
         }
-        addMessage("No entendí. Escribí '<b>Menú</b>' para ver todas las opciones. 🤔", 'bot');
+        addMessage("No entendí. Escribí '<b>Menú</b>' para ver opciones. 🤔", 'bot');
         showNavControls();
     }, 800);
 }
@@ -1042,7 +1044,7 @@ function processInput() {
         setTimeout(() => addMessage(`¡Genial! <b>${userName}</b>, ¿cuál es tu rango de edad?`, 'bot', edades), 800);
         return;
     }
-    addMessage(val, 'user'); registrarEvento("Escribió", val); input.value = ""; ejecutarBusqueda(val.toLowerCase());
+    addMessage(val, 'user'); registrarEvento("Escribió", val); input.value = ""; ejecutarBusquedaInteligente(val.toLowerCase());
 }
 
 /* --- 8. CARGA --- */
@@ -1052,5 +1054,5 @@ function toggleInput(show) { document.getElementById('inputBar').style.display =
 function toggleInfo() { document.getElementById('infoModal').classList.toggle('show'); }
 function clearSession() { if(confirm("¿Borrar datos?")) { localStorage.clear(); location.reload(); } }
 
-window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Hola, soy MuniBot ¿Cómo es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
+window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido. Para empezar, ¿cómo es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
