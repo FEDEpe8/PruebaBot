@@ -14,7 +14,7 @@ let formData = { tipo: "", ubicacion: "", descripcion: "" };
 let isBotThinking = false; 
 
 /* --- 2. ESTADÍSTICAS --- */
-const STATS_URL = "https://script.google.com/macros/s/AKfycbyv6W175qMpbqVUsg0ETM2SOtkdUPsoAUHG3XnaiIjgMFmEnDr7FeVGcyr9dl9AfHB0/exec";
+const STATS_URL = "https://script.google.com/macros/s/AKfycbxhV-xqoXhdzceapbXf3xXPG0OEUKxsplPdcipMT6KUBux0KRlZuoOGLIRi9OLIhjf9/exec";
 
 function registrarEvento(accion, detalle) {
     if (!STATS_URL || STATS_URL.includes("TUS_LETRAS_RARAS")) return;
