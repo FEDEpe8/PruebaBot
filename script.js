@@ -37,13 +37,13 @@ function registrarEvento(accion, detalle) {
 /* --- 3. MENÚS (DATA ORIGINAL PRESERVADA + INTEGRACIÓN ATAJOS) --- */  
 const MENUS = {
     // MENÚ PRINCIPAL: Solo atajos rápidos
-    main: { 
-        title: (name) => `¡Hola <b>${name}</b>! 👋 Soy MuniBot el asistente virtual de la Municipalidad. ¿Empecemos la recorrida?`, 
+ main: { 
+        title: (name) => `¡Hola <b>${name}</b>! 👋 Soy V.I.C. Acá tenés los accesos más rápidos de hoy:`, 
         options: [
-            { id: 'oea_link_shortcut', label: '👀 Ojos en Alerta', type: 'leaf', apiKey: 'ojos_en_alerta' },
-            { id: 'ag_actual_shortcut', label: '🎭 Agenda Cultural', type: 'leaf', apiKey: 'agenda_actual' },
-            { id: 'f_lista_shortcut', label: '💊 Farmacias de Turno', type: 'leaf', apiKey: 'farmacias_lista' },
-            { id: 'h_tur_shortcut', label: '📅 Turnos Hospital', type: 'leaf', apiKey: 'h_turnos' },
+            { id: 'oea_shortcut', label: '👀 Ojos en Alerta', type: 'leaf', apiKey: 'ojos_en_alerta' },
+            { id: 'ag_shortcut', label: '🎭 Agenda Cultural', type: 'leaf', apiKey: 'agenda_actual' },
+            { id: 'f_shortcut', label: '💊 Farmacias de Turno', type: 'leaf', apiKey: 'farmacias_lista' },
+            { id: 'h_shortcut', label: '📅 Turnos Hospital', type: 'leaf', apiKey: 'h_turnos' },
             { id: 'full_menu', label: '☰ VER MENÚ COMPLETO' }
         ]
     },
@@ -863,7 +863,11 @@ function addMessage(content, side = 'bot', options = null) {
 
 function handleAction(opt) {
     if (isBotThinking) return; 
-    if (opt.id === 'back') { currentPath.pop(); showMenu(currentPath[currentPath.length - 1]); return; }
+    if (opt.id === 'back') { 
+        if (currentPath.length > 1) currentPath.pop(); 
+        showMenu(currentPath[currentPath.length - 1]); 
+        return; 
+    }
     if (opt.link) { window.open(opt.link, '_blank'); return; }
 
     addMessage(opt.label, 'user');
