@@ -863,29 +863,34 @@ function addMessage(content, side = 'bot', options = null) {
 
 function handleAction(opt) {
     if (isBotThinking) return; 
+    
     if (opt.id === 'back') { 
         if (currentPath.length > 1) currentPath.pop(); 
         showMenu(currentPath[currentPath.length - 1]); 
         return; 
     }
+
     if (opt.link) { window.open(opt.link, '_blank'); return; }
 
     addMessage(opt.label, 'user');
-    registrarEvento("Click", opt.label || opt.id);
 
-    if (opt.type === 'form_147') return startReclamoForm();
-    
     // REGISTRO DE EDAD
     if (opt.type === 'age_select') {
-        userAge = opt.label; localStorage.setItem('muni_user_age', userAge);
+        userAge = opt.label; 
+        localStorage.setItem('muni_user_age', userAge);
+        registrarEvento("Registro", "Perfil Completo"); // Registra el fin del registro
         showTyping();
         setTimeout(() => {
             addMessage(`¡Gracias <b>${userName}</b>! Ya tengo tus datos. ¿En qué te ayudo hoy?`, 'bot');
-            resetToMain(); // CARGA LOS ATAJOS
+            resetToMain();
         }, 1000);
         return;
     }
 
+    // REGISTRO DE CLICKS (Solo si no es volver ni registro)
+    registrarEvento("Click", opt.label || opt.id);
+
+    if (opt.type === 'form_147') return startReclamoForm();
     showTyping();
     const frase = getFraseAleatoria();
 
@@ -899,7 +904,6 @@ function handleAction(opt) {
         setTimeout(() => { addMessage(frase, 'bot'); showMenu(opt.id); }, 600);
     }
 }
-
 function showMenu(key) {
     if (document.getElementById('typingIndicator')) removeTyping();
     const menu = MENUS[key];
