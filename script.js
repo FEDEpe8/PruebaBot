@@ -11,7 +11,7 @@ let currentPath = ['main'];
 let isAwaitingForm = false;
 let currentFormStep = 0;
 let formData = { tipo: "", ubicacion: "", descripcion: "" };
-let isBotThinking = false; // Bloqueo para evitar doble click
+let isBotThinking = false; 
 
 /* --- 2. ESTADÍSTICAS --- */
 const STATS_URL = "https://script.google.com/macros/s/AKfycbyv6W175qMpbqVUsg0ETM2SOtkdUPsoAUHG3XnaiIjgMFmEnDr7FeVGcyr9dl9AfHB0/exec";
@@ -391,7 +391,7 @@ function showTyping() {
     const typing = document.createElement('div');
     typing.id = 'typingIndicator';
     typing.className = 'typing-indicator';
-    typing.innerHTML = '<span></span><span></span><span></span>';
+    typing.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
     container.appendChild(typing);
     scrollToBottom();
 }
@@ -704,8 +704,8 @@ function ejecutarBusquedaInteligente(texto) {
         'castracion': { type: 'leaf', apiKey: 'zoo_rabia', label: '🐾 Zoonosis' },
         'vacunacion': { type: 'leaf', apiKey: 'vacunacion_info', label: '💉 Vacunación' },
         'vacuna':     { type: 'leaf', apiKey: 'vacunacion_info', label: '💉 Vacunación' },
-        'empleo':     { type: 'leaf', apiKey: 'prod_empleo', label: '👷 Empleo' },
-        'emprende':   { id: 'produccion_menu', label: '👷 Producción y Empleo' }, 
+        'empleo':     { id: 'produccion', label: '👷 Empleo' }, /* FIX: Estaba mal el id */
+        'emprende':   { id: 'produccion', label: '👷 Producción y Empleo' }, /* FIX: Estaba mal el id */
         'caps':       { id: 'centros', label: '🏥 Caps' },
         'saludmental': { id: 'centros', label: '🏥 Caps' },
         'salita':     { id: 'centros', label: '🏥 Caps' },
@@ -735,7 +735,8 @@ function ejecutarBusquedaInteligente(texto) {
         'vivienda':   { type: 'leaf', apiKey: 'habitat_info', label: '🏢 Habilitación Habitacional'  },       
         'denuncia':   { id: 'omic', label: '🏦 Denuncias Omic' },
         'consumidor': { id: 'omic', label: '🏦 Denuncias Omic' },
-        'barrio':     { id: 'vecinales', label: '🏘️ Vecinales' },
+        /* FIX: 'barrio' apuntaba a 'vecinales' que NO EXISTÍA en MENUS. Apunté a Desarrollo Social. */
+        'barrio':     { id: 'desarrollo_menu', label: '🏘️ Vecinales' },
         'trabajo':    { id: 'produccion', label: '👷 Producción y Empleo' },        
         'curriculum': { id: 'produccion', label: '👷 Producción y Empleo' },
         'cv':         { id: 'produccion', label: '👷 Producción y Empleo' },
