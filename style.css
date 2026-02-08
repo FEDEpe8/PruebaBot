@@ -24,16 +24,18 @@ body {
     font-family: 'Inter', -apple-system, sans-serif;
     background: var(--bg-app);
     color: var(--text-main);
-    display: flex; 
-    flex-direction: column;
     
-    /* FIX: Cambios clave para estabilizar la pantalla en móviles */
-    height: 100dvh; /* Usamos Dynamic Viewport Height */
-    width: 100%;
-    position: fixed; /* Esto evita que el navegador mueva la app al refrescar */
-    inset: 0;        /* Asegura que ocupe todo el espacio disponible */
+    /* FIX: Usamos Grid para que las secciones no se empujen entre sí */
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* Cabezal (auto), Mensajes (lo que reste), Input (auto) */
+    
+    height: 100dvh; /* Alto dinámico real */
+    width: 100vw;
+    margin: 0;
+    padding: 0;
     overflow: hidden; 
-    overscroll-behavior: none; /* Evita el efecto "rebote" de la página */
+    position: fixed; /* Mantiene la App "anclada" */
+    inset: 0;
 }
 
 /* --- HEADER --- */
@@ -61,14 +63,17 @@ body {
 
 /* --- CHAT AREA --- */
 .chat-container {
-    flex: 1;
     overflow-y: auto;
-    padding: 20px 16px 120px 16px;
-    display: flex; flex-direction: column; gap: 16px;
-    -webkit-overflow-scrolling: touch;
-    
-    /* FIX: Crucial para que el scroll funcione bien dentro de un contenedor fixed */
-    min-height: 0; 
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0; /* Permite que el contenedor se achique si es necesario */
+}
+
+/* Quitamos el padding-bottom exagerado que tenías antes, ya no es necesario */
+.chat-container {
+    padding-bottom: 20px; 
 }
 
 /* Mensajes */
