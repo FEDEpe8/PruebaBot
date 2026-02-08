@@ -26,7 +26,12 @@ body {
     font-family: 'Inter', -apple-system, sans-serif;
     background: var(--bg-light);
     color: var(--text-dark);
-    display: flex; flex-direction: column;
+    display: flex; 
+    flex-direction: column;
+    /* --- ESTO ES LO QUE FALTA --- */
+    height: 100vh; 
+    height: 100dvh; 
+    overflow: hidden; /* Evita que rebote toda la web */
 }
 
 /* --- HEADER PREMIUM --- */
