@@ -1064,7 +1064,15 @@ document.getElementById('sendButton').onclick = processInput;
 document.getElementById('userInput').onkeypress = (e) => { if(e.key === 'Enter') processInput(); };
 function toggleInput(show) { document.getElementById('inputBar').style.display = show ? 'flex' : 'none'; }
 function toggleInfo() { document.getElementById('infoModal').classList.toggle('show'); }
-function clearSession() { if(confirm("¿Borrar datos?")) { localStorage.clear(); location.reload(); } }
+function clearSession() { 
+    if(confirm("¿Borrar datos?")) { 
+        localStorage.clear(); 
+        // Pequeño delay para asegurar que el storage se limpie antes de recargar
+        setTimeout(() => {
+            window.location.href = window.location.pathname + '?refresh=' + Date.now();
+        }, 100);
+    } 
+}
 
 window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido. Para empezar, ¿cual es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
