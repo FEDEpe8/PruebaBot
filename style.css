@@ -240,3 +240,46 @@ body {
     text-decoration: none !important;
     color: #1f2937 !important;
 }
+/* ==================================================
+   URGENTE: RESTAURAR VISIBILIDAD DE TARJETAS
+   ================================================== */
+
+/* 1. OBLIGAR a que las respuestas del bot (Info Cards) se vean */
+.chat-container .info-card, 
+div.info-card {
+    display: block !important; /* IMPORTANTE: Esto las revive */
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid var(--accent);
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 8px;
+    color: var(--text-main);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 2. Asegurar que el texto dentro de las tarjetas sea visible */
+.info-card p, .info-card span, .info-card div {
+    color: var(--text-main);
+    display: block;
+}
+
+/* 3. SOLO ocultar la pantalla de "Sobre MuniBot" (El Modal) */
+/* No uses .info-card para ocultar esto, usa .modal */
+.modal {
+    display: none !important; /* Oculto por defecto */
+}
+
+/* Solo se muestra si tiene la clase .show (activada por JS) */
+.modal.show {
+    display: flex !important;
+    position: fixed;
+    z-index: 2000;
+}
+
+/* 4. Si la "leyenda" que molestaba era un texto suelto en el footer */
+/* Agrega este ID a ese texto específico en tu HTML para ocultarlo */
+#leyenda-footer {
+    display: none;
+}
