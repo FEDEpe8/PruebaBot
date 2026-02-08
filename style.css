@@ -188,3 +188,55 @@ body {
     width: 85%;
     max-width: 320px;
 }
+/* --- RECUPERAR CONTENIDO DE LOS BOTONES --- */
+
+/* Aseguramos el contenedor */
+.options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* Estilo forzado para CUALQUIER botón dentro del chat */
+.options-container button,
+.option-button,
+.btn-option {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    
+    /* Colores Visibles (Gris claro con texto oscuro) */
+    background-color: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+    color: #1f2937 !important; /* Texto gris oscuro casi negro */
+    
+    /* Texto y tamaño */
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    padding: 8px 14px !important;
+    border-radius: 20px !important;
+    
+    /* Evitar que desaparezca */
+    opacity: 1 !important;
+    visibility: visible !important;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+/* Efecto al tocar */
+.options-container button:active,
+.option-button:active {
+    background-color: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+    transform: scale(0.98);
+}
+
+/* Si usas enlaces <a> como botones */
+.options-container a {
+    text-decoration: none !important;
+    color: #1f2937 !important;
+}
