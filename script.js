@@ -14,7 +14,7 @@ let formData = { tipo: "", ubicacion: "", descripcion: "" };
 let isBotThinking = false; 
 
 /* --- 2. ESTADÍSTICAS --- */
-const STATS_URL = "https://script.google.com/macros/s/AKfycbxhV-xqoXhdzceapbXf3xXPG0OEUKxsplPdcipMT6KUBux0KRlZuoOGLIRi9OLIhjf9/exec";
+const STATS_URL = "https://script.google.com/macros/s/AKfycbwMMqqF3qR_Ye8nVuO8IZdOiGmtaDTP1y574U2lGPYL30ofQtnVR65WC5d8fJH2abhEDQ/exec";
 
 function registrarEvento(accion, detalle) {
     if (!STATS_URL || STATS_URL.includes("TUS_LETRAS_RARAS")) return;
@@ -820,8 +820,11 @@ const FRASES_RESPUESTA = [
 function getFraseAleatoria() { return FRASES_RESPUESTA[Math.floor(Math.random() * FRASES_RESPUESTA.length)]; }
 
 function scrollToBottom() {
-    const container = document.getElementById('chatMessages'); 
-    setTimeout(() => container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }), 100);
+    const container = document.querySelector('.chat-container');
+    container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth' // Esto hace que el "correr" sea suave y elegante
+    });
 }
 
 function showTyping() {
@@ -904,6 +907,7 @@ function handleAction(opt) {
         setTimeout(() => { addMessage(frase, 'bot'); showMenu(opt.id); }, 600);
     }
 }
+
 function showMenu(key) {
     if (document.getElementById('typingIndicator')) removeTyping();
     const menu = MENUS[key];
@@ -1064,3 +1068,6 @@ function clearSession() { if(confirm("¿Borrar datos?")) { localStorage.clear();
 
 window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido. Para empezar, ¿cual es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+
+
