@@ -1,9 +1,9 @@
 /* ============================================
-   MUNIBOT CHASCOMÚS - FIX LEYENDA Y MODAL
+   MUNIBOT CHASCOMÚS - ESTILO FINAL 2026
    ============================================ */
 
 :root {
-    --primary: #004a7c;
+    --primary: #004a7c; /* El azul de tu cabecera */
     --primary-light: #005f9e;
     --accent: #8cc63f;
     --bg-app: #f4f6f8;
@@ -15,91 +15,129 @@
     --safe-bottom: env(safe-area-inset-bottom, 12px);
 }
 
-/* --- RESET Y BASE --- */
+/* --- ESTRUCTURA BASE (No tocar para que no rebote) --- */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    position: fixed; 
+    position: fixed; /* Mantiene el fondo quieto en celulares */
 }
 
 body {
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: var(--bg-app);
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100dvh; 
 }
 
-/* --- HEADER --- */
+/* --- HEADER (Fijo arriba) --- */
 .app-header {
     background: var(--primary);
     color: white;
-    padding: 12px 16px;
-    padding-top: max(12px, env(safe-area-inset-top));
+    padding: 10px 16px;
+    padding-top: max(10px, env(safe-area-inset-top));
     display: flex;
     align-items: center;
     justify-content: space-between;
+    height: 60px;
     z-index: 1000;
     flex-shrink: 0;
 }
 
 .header-brand { display: flex; align-items: center; gap: 10px; }
-.header-logo { width: 34px; height: 34px; border-radius: 50%; background: #fff; padding: 2px; }
+.header-logo { width: 36px; height: 36px; border-radius: 50%; background: #fff; padding: 2px; }
 .header-title { font-weight: 700; font-size: 1.1rem; }
 
-/* --- CHAT AREA --- */
+/* Botones de info y refresh del header */
+.header-actions { display: flex; gap: 8px; }
+.btn-header { 
+    background: white; 
+    border: none; 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 4px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer;
+    color: var(--primary);
+}
+
+/* --- ÁREA DE MENSAJES --- */
 .chat-container {
     flex: 1;
     overflow-y: auto;
     padding: 20px 16px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     -webkit-overflow-scrolling: touch;
-    /* Ajuste para que los mensajes no queden bajo la barra */
-    padding-bottom: 100px; 
+    /* Espacio abajo para que el último mensaje no quede bajo la barra */
+    padding-bottom: 110px; 
 }
 
 .message {
     max-width: 85%;
     padding: 12px 16px;
     font-size: 0.95rem;
-    line-height: 1.5;
+    line-height: 1.4;
     border-radius: var(--radius-bubble);
     word-wrap: break-word;
     box-shadow: var(--shadow-soft);
-    animation: popIn 0.3s ease-out;
+    animation: popIn 0.2s ease-out;
 }
 
-@keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-.message.bot { background: var(--bg-card); align-self: flex-start; border-bottom-left-radius: 4px; }
-.message.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.message.bot { 
+    background: var(--bg-card); 
+    color: var(--text-main);
+    align-self: flex-start; 
+    border-bottom-left-radius: 4px; 
+}
 
-/* --- INPUT AREA (ANCLADO ABAJO) --- */
+.message.user { 
+    background: var(--primary); 
+    color: white; 
+    align-self: flex-end; 
+    border-bottom-right-radius: 4px; 
+}
+
+/* Botones de opciones (los que aparecen en el chat) */
+.options-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.option-button {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* --- INPUT BAR (Fija abajo de todo) --- */
 .input-area {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    background: var(--bg-card);
+    background: white; /* El fondo blanco que se ve en tu captura */
     padding: 12px 16px;
     padding-bottom: max(12px, var(--safe-bottom));
-    border-top: 1px solid #eee;
+    border-top: 1px solid #e5e7eb;
     z-index: 1000;
 }
 
 .input-wrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background: #f3f4f6;
-    border-radius: 25px;
-    padding: 5px 5px 5px 15px;
+    gap: 10px;
+    background: #f3f4f6; /* El color gris de la cápsula */
+    border-radius: 30px;
+    padding: 5px 5px 5px 18px;
 }
 
 #userInput {
@@ -107,66 +145,46 @@ body {
     border: none;
     background: transparent;
     outline: none;
-    font-size: 16px; 
-    padding: 8px 0;
+    font-size: 16px; /* Evita zoom molesto en móviles */
+    padding: 10px 0;
+    color: var(--text-main);
 }
 
 .btn-send {
     background: var(--primary);
     color: white;
     border: none;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-}
-
-/* --- FIX: OCULTAR LA LEYENDA (MODAL) --- */
-/* Esto asegura que la sección "Sobre MuniBot" no se vea en el flujo normal */
-.modal { 
-    display: none; /* OCULTO POR DEFECTO */
-    position: fixed; 
-    top: 0; left: 0; 
-    width: 100%; height: 100%; 
-    background: rgba(0,0,0,0.7); 
-    z-index: 9999; /* Por encima de todo */
-    align-items: center; 
-    justify-content: center; 
-    backdrop-filter: blur(4px);
-}
-
-/* Solo se muestra cuando tiene la clase .show */
-.modal.show { 
-    display: flex !important; 
-}
-
-.modal-content { 
-    background: white; 
-    width: 85%; 
-    max-width: 350px; 
-    border-radius: 20px; 
-    padding: 25px; 
-    position: relative;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    text-align: center;
-}
-
-.modal-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #eee;
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
     cursor: pointer;
 }
 
-/* --- INFO CARD (Si la usas fuera del modal, también la ocultamos) --- */
-.info-card {
-    display: none; /* Cambiar a block solo si quieres que se vea en el chat */
+/* --- OCULTAR LA LEYENDA "SOBRE MUNIBOT" --- */
+/* Identificamos la sección por el texto que mencionas */
+#about-section, .about-bot, .modal, .info-card, [class*="legend"] {
+    display: none !important; /* Escondido por defecto */
+}
+
+/* Si quieres que se vea el modal cuando tocas el botón (i) */
+.modal.show {
+    display: flex !important;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    width: 85%;
+    max-width: 320px;
 }
