@@ -1,20 +1,28 @@
 /* ============================================================
-   MUNICIPALIDAD DE CHASCOMÚS - CHATBOT SCRIPT (FULL DATA)
+   MUNICIPALIDAD DE CHASCOMÚS - CHATBOT SCRIPT (SELECTOR BARRIOS)
    ============================================================ */
 
-/* --- 1. CONFIGURACIÓN Y ESTADO --- */
+/* --- 1. CONFIGURACIÓN, ESTADO Y BARRIOS --- */
 let userName = localStorage.getItem('muni_user_name') || "";
 let userNeighborhood = localStorage.getItem('muni_user_neighborhood') || "";
 let userAge = localStorage.getItem('muni_user_age') || "";
-
 let currentPath = ['main'];
 let isAwaitingForm = false;
-let currentFormStep = 0;
+let isBotThinking = false;
 let formData = { tipo: "", ubicacion: "", descripcion: "" };
-let isBotThinking = false; 
+
+
+// Lista oficial completa (Orden Alfabético para facilitar búsqueda)
+const BARRIOS_CHASCOMUS = [
+    "30 de Mayo", "Acceso Norte", "Barrio Jardín", "Centro", 
+    "Comandante Giribone", "El Algarrobo", "El Porteño", "Escribano", 
+    "Fátima", "Gallo Blanco", "Iporá", "La Noria", "Las Violetas", 
+    "Lomas Altas", "Los Sauces", "Parque Girado", "San Cayetano", 
+    "San José Obrero", "San Luis", "139 Viviendas", "Cooperativa", "Comi Pini"
+];
 
 /* --- 2. ESTADÍSTICAS --- */
-const STATS_URL = "https://script.google.com/macros/s/AKfycbwMMqqF3qR_Ye8nVuO8IZdOiGmtaDTP1y574U2lGPYL30ofQtnVR65WC5d8fJH2abhEDQ/exec";
+const STATS_URL = "https://script.google.com/macros/s/AKfycby5nTXeud9ZQpnJQ_yJlumF4g1XoWlksV3f_8u7iCU-BrwawsVVvLOmKYAhAcOx0GOf/exec";
 
 function registrarEvento(accion, detalle) {
     if (!STATS_URL || STATS_URL.includes("TUS_LETRAS_RARAS")) return;
@@ -34,16 +42,18 @@ function registrarEvento(accion, detalle) {
     }).catch(console.error);
 }
 
-/* --- 3. MENÚS (DATA ORIGINAL PRESERVADA + INTEGRACIÓN ATAJOS) --- */  
+/* --- 3. MENÚS Y FLUJO --- */
+
 const MENUS = {
     // MENÚ PRINCIPAL: Solo atajos rápidos
  main: { 
-        title: (name) => `¡Hola <b>${name}</b>! 👋 Soy V.I.C. Acá tenés los accesos más rápidos de hoy:`, 
+        title: (name) => `¡Hola <b>${name}</b>! 👋 Soy MuniBot el asistente virtual. Acá tenés los accesos más rápidos de hoy:`, 
         options: [
             { id: 'oea_shortcut', label: '👀 Ojos en Alerta', type: 'leaf', apiKey: 'ojos_en_alerta' },
             { id: 'ag_shortcut', label: '🎭 Agenda Cultural', type: 'leaf', apiKey: 'agenda_actual' },
             { id: 'f_shortcut', label: '💊 Farmacias de Turno', type: 'leaf', apiKey: 'farmacias_lista' },
             { id: 'h_shortcut', label: '📅 Turnos Hospital', type: 'leaf', apiKey: 'h_turnos' },
+            { id: 'politicas_gen_shortcut', label: '💜 GÉNERO (Urgencias)', type: 'leaf', apiKey: 'politicas_gen' },
             { id: 'full_menu', label: '☰ VER MENÚ COMPLETO' }
         ]
     },
@@ -72,7 +82,7 @@ const MENUS = {
             { id: 'contacto_op', label: '☎️ Hablar con Operador', type: 'leaf', apiKey: 'contacto_gral' }
         ]
     },
-
+// submenues originales con atajos integrados
     ojos_en_alerta: {
         title: () => '👁️ Ojos en Alerta:',
         options: [
@@ -172,7 +182,9 @@ const MENUS = {
     seguridad: { 
         title: () => 'Seguridad y Trámites:', 
         options: [
+            { id: 'seg_video', label: '🎥 Ver Video alcohol al volante', type: 'leaf', apiKey: 'alcohol_info' },
             { id: 'pamuv', label: '🆘 Asistencia Víctima (PAMUV)', type: 'leaf', apiKey: 'pamuv' },
+            { id: 'seg_video', label: '🎥 Ver Video Instructivo Basapp ', type: 'leaf', apiKey: 'Basapp_info' },
             { id: 'apps_seg', label: '📲 Descargar Apps (Basapp y SEM)', type: 'leaf', apiKey: 'apps_seguridad' }, 
             { id: 'def_civil', label: '🌪️ Defensa Civil (103)', type: 'leaf', apiKey: 'defensa_civil' },
             { id: 'lic_tramite', label: '🪪 Licencia (Carnet)', type: 'leaf', apiKey: 'lic_turno' },
@@ -193,7 +205,8 @@ const MENUS = {
     },
     pago_deuda: {
         title: () => 'Pago de Deudas y Boletas:',
-        options: [        
+        options: [   
+            { id: 'deuda_video', label: '🎥 Ver Video Instructivo', type: 'leaf', apiKey: 'deuda_video_info' },     
             { id: 'deuda', label: '🔍 Ver Deuda / Pagar', type: 'leaf', apiKey: 'deuda' },
             { id: 'agua', label: '💧 Agua', type: 'leaf', apiKey: 'agua' },
             { id: 'boleta', label: '📧 Boleta Digital', type: 'leaf', apiKey: 'boleta' }
@@ -310,12 +323,13 @@ const RES = {
 
         🏛️🌅 <b>INSCRIPCIONES Y LINKS:</b><br>
         Solicitá los formularios de inscripción para actividades:<br><br>
-        📲 <b>WhatsApp Turismo:</b><br>
-        <a href="https://wa.me/5492241603414" style="color:#25D366; font-weight:bold; text-decoration:none;">💬 2241-603414 (Clic aquí)</a><br><br>
+        <a href="https://wa.me/5492241603414" target="_blank" class="wa-btn" style="background-color: #efe8e3ff !important;">
+        📲 Por cualquier info (WhatsApp)
+        </a><br><br>
         🔗 <b>Linktree Inscripciones:</b><br>
         <a href="https://linktr.ee/visitasguiadas.turismoch" target="_blank">Ingresar al Linktree</a>
     </div>`,
-    
+    // Respuesta original de OMIC
     'omic_info': `
     <div class="info-card">
         <strong>📢 OMIC (Defensa del Consumidor)</strong><br>
@@ -326,7 +340,7 @@ const RES = {
         ⏰ <b>Horario:</b> Lunes a Viernes de 8:00 a 13:00 hs.<br>
         📞 <b>Teléfonos:</b> 43-1287 / 42-5558
     </div>`,
-
+// Respuesta original de WhatsApp de los CAPS
     'caps_wa': `
     <div class="info-card">
         <strong>📞 WhatsApp de los CAPS:</strong><br><br>
@@ -340,6 +354,20 @@ const RES = {
         🟢 <b>San Cayetano:</b> <a href="https://wa.me/5492241511430">2241-511430</a>
     </div>`,
 
+    // Respuesta original de los CAPS con mapas integrados
+    'caps_mapas': `
+    <div class="info-card">
+        <strong>📍 Ubicaciones CAPS (Toque para ver mapa):</strong><br><br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CIC+30+de+Mayo+Chascomus" target="_blank">CIC 30 de Mayo</a> (Bvd. 5 y Calle 2)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=Barrio+Jardin+Chascomus" target="_blank">Barrio Jardín</a> (Tucumán e/ Quintana)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+San+Luis+Chascomus" target="_blank">San Luis</a> (Chubut 755)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+El+Porteño+Chascomus" target="_blank">El Porteño</a> (Lucio Mansilla)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+Gallo+Blanco+Chascomus" target="_blank">Gallo Blanco</a> (Estados Unidos)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+Ipora+Chascomus" target="_blank">Iporá</a> (Sargento Cabral 387)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+La+Noria+Chascomus" target="_blank">La Noria</a> (Grito de Dolores)<br>
+        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+San+Cayetano+Chascomus" target="_blank">San Cayetano</a> (Gabino Ezeiza)
+    </div>`,
+// Respuesta del 147 con información completa y detallada, integrando atajos rápidos a la web y WhatsApp
     'link_147': `
     <div class="info-card">
         <strong>📝 ATENCIÓN AL VECINO 147</strong><br><br>
@@ -354,19 +382,13 @@ const RES = {
         Nombre, DNI, Teléfono, Dirección del problema y adjuntar foto o archivo.
     </div>`,
 
-    'caps_mapas': `
-    <div class="info-card">
-        <strong>📍 Ubicaciones CAPS (Toque para ver mapa):</strong><br><br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CIC+30+de+Mayo+Chascomus" target="_blank">CIC 30 de Mayo</a> (Bvd. 5 y Calle 2)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=Barrio+Jardin+Chascomus" target="_blank">Barrio Jardín</a> (Tucumán e/ Quintana)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+San+Luis+Chascomus" target="_blank">San Luis</a> (Chubut 755)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+El+Porteño+Chascomus" target="_blank">El Porteño</a> (Lucio Mansilla)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+Gallo+Blanco+Chascomus" target="_blank">Gallo Blanco</a> (Estados Unidos)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+Ipora+Chascomus" target="_blank">Iporá</a> (Sargento Cabral 387)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+La+Noria+Chascomus" target="_blank">La Noria</a> (Grito de Dolores)<br>
-        • <a href="https://www.google.com/maps/search/?api=1&query=CAPS+San+Cayetano+Chascomus" target="_blank">San Cayetano</a> (Gabino Ezeiza)
-    </div>`,
+     // --- OBRAS PÚBLICAS Y ATENCIÓN AL VECINO --- //
 
+    'poda': `<div class="info-card"><strong>🌿 Ingresa en este link 👇🏼</strong><br>🔗 <a href="https://apps.chascomus.gob.ar/podaresponsable/solicitud.php">🌳 Solicitud Poda</a></div>`,
+    'obras_basura': `<div class="info-card"><strong>♻️ Recolección de residuos</strong><br>Lun a Sáb 20hs (Húmedos)</strong><br>Jueves 14hs (Reciclables)`,
+    
+
+// Respuesta original de las farmacias con botón integrado a TurnoFarma
     'farmacias_lista': `
     <div class="info-card">
         <strong>📍 Farmacias en Chascomús:</strong><br><br>
@@ -388,7 +410,7 @@ const RES = {
         • <b>Puyssegur:</b> Libres del Sur 946<br><br>
         💊 <a href="https://www.turnofarma.com/turnos/ar/ba/chascomus" target="_blank" class="wa-btn" style="background:#2ecc71 !important;">VER FARMACIAS DE TURNO</a>
     </div>`,
-
+// Respuesta original del quirófano móvil con información detallada y requisitos para los vecinos
     'zoo_rabia': `
     <div class="info-card" style="border-left: 5px solid #f1c40f;">
         <strong style="color:#d35400;">🐾 Quirófano Móvil (Castración)</strong><br><br>
@@ -399,7 +421,7 @@ const RES = {
         🐕 <b>Requisito:</b> Llevar la mascota con collar, correa y/o transportadora.<br><br>
         🏢 <b>Sede Zoonosis:</b> Mendoza 95.
     </div>`,
-
+// Respuesta original del vacunatorio con información completa sobre los puntos de vacunación, requisitos y contacto para consultas
     'vacunacion_info': `
     <div class="info-card">
         <strong>💉 Vacunación</strong><br><br>
@@ -412,7 +434,7 @@ const RES = {
         • <b>Requisitos:</b> Llevar DNI y Libreta de Vacunación.<br><br>
         📱 <i>Consultá las redes de "Secretaría de Salud Chascomús" para horarios actualizados.</i>
     </div>`,
-
+// Respuesta original de Hábitat con información detallada sobre trámites, contacto y planes habitacionales
     'info_habitat': `
     <div class="info-card">
         <strong>🔑 Info de Hábitat</strong><br>
@@ -421,7 +443,7 @@ const RES = {
         • Gestión de Tierras y Catastro.<br><br>
         👇 <b>Seleccioná una opción:</b>
     </div>`,
-    
+    // Respuesta original de Hábitat con información detallada sobre la dirección, contacto y opciones de consulta rápida a través de WhatsApp y Google Maps
     'habitat_info': `
     <div class="info-card">
         <strong>📍 Dirección y contacto</strong><br>
@@ -433,7 +455,8 @@ const RES = {
             📍 Dorrego y Bolivar (Ex IOMA)
         </a>
        </div>`,
-       
+       // Respuesta original de Hábitat con información detallada sobre los planes habitacionales, 
+       // trámites disponibles y enlaces rápidos a la web de vivienda social
     'habitat_planes': `
     <div class="info-card">
         <strong>🏘️ Planes Habitacionales</strong><br>
@@ -446,7 +469,8 @@ const RES = {
         🔗 Planes Habitacionales
         </a>
     </div>`,
-
+    // Respuesta original de Ojos en Alerta con información detallada sobre el programa, tipos de denuncias que se pueden realizar,
+    // dirección, horario y contacto directo a través de WhatsApp
      'ojos_en_alerta': `
     <div class="info-card">
         <strong>👀 OJOS(En alerta)</strong><br>
@@ -455,8 +479,9 @@ const RES = {
         Protección de derechos del ciudadano.<br><br>
         📍 <b>Dirección:</b> Arenales y Julian quintana).<br>
         ⏰ <b>Horario:</b> Lunes a Lunes 24hs.<br>
-        <a href="https://wa.me/5492241557444">2241-557444</a><br><br>
-       
+        <a href="https://wa.me/5492241557444" target="_blank" class="wa-btn" style="background-color: #efe8e3ff !important;">
+        📲 Por cualquier info (WhatsApp)
+        </a>
     </div>`,
 
     // Respuestas Seguridad y Trámites
@@ -468,6 +493,22 @@ const RES = {
     Atención ante temporales, caída de árboles y riesgo en vía pública.<br>
     📞 <a href="tel:103" class="wa-btn" style="background-color: #c0392b !important; text-align:center; display:block;">LLAMAR AL 103</a><br>
     📧 <a href="mailto:defensa.civil@chascomus.gob.ar">Enviar Correo Electrónico</a></div>`,
+    
+    // Respuesta original de las aplicaciones de seguridad con información detallada sobre cada app, 
+    // sus funciones principales y enlaces directos para descargar en Android e iPhone
+    'Basapp_info': `
+    <div class="info-card">
+        <strong>🎥 Guía de Basapp</strong><br><br>
+        <video width="100%" height="auto" controls style="border-radius: 8px; border: 1px solid #ddd;">
+            <source src="videos/Basapp.mp4" type="video/mp4">
+            Tu navegador no soporta el video.
+        </video>
+        <br><br>
+        <p style="font-size: 0.85rem; color: #555;">
+            Mirá este breve tutorial sobre cómo usar la app Basapp.
+        </p>
+    </div>`,
+
     'apps_seguridad': `
     <div class="info-card">
         <strong>📲 Aplicaciones de Seguridad y Tránsito</strong><br><br>
@@ -480,14 +521,28 @@ const RES = {
         Gestioná tu estacionamiento.<br>
         🤖 <a href="https://play.google.com/store/apps/details?id=ar.edu.unlp.sem.mobile" target="_blank" rel="noopener noreferrer">Descargar Android</a><br>
         🍎 <a href="https://apps.apple.com/ar/app/sem-mobile/id1387705895" target="_blank" rel="noopener noreferrer">Descargar iPhone</a></div>`,
-    'turismo_info': `<div class="info-card"><strong>🏖️ Subsecretaría de Turismo</strong><br>📍 Av. Costanera España 25<br>📞 <a href="tel:02241615542">02241 61-5542</a><br>📧 <a href="mailto:turismo@chascomus.gob.ar">Enviar Email</a><br>🔗 <a href="https://linktr.ee/turismoch" target="_blank">Más info en Linktree</a></div>`,
-    'deportes_info': `<div class="info-card"><strong>⚽ Dirección de Deportes</strong><br>📍 Av. Costanera España y Av. Lastra<br>📞 <a href="tel:02241424649">(02241) 42 4649</a></div>`,
-    'deportes_circuito': `<div class="info-card"><strong>🏃 Circuito de Calle</strong><br>Inscripciones, cronograma y resultados oficiales.<br>🔗 <a href="https://apps.chascomus.gob.ar/deportes/circuitodecalle/" target="_blank">IR A LA WEB</a></div>`,
+   
+         // Respuesta original de Seguridad con información detallada sobre cada servicio, contacto directo a través de WhatsApp 
+   // y enlaces rápidos a las aplicaciones oficiales
+   'alcohol_info': `
+    <div class="info-card">
+        <strong>🎥 Guía de alcohol al volante</strong><br><br>
+        <video width="100%" height="auto" controls style="border-radius: 8px; border: 1px solid #ddd;">
+            <source src="videos/Alcohol_al_volante.mp4" type="video/mp4">
+            Tu navegador no soporta el video.
+        </video>
+        <br><br>
+        <p style="font-size: 0.85rem; color: #555;">
+            Mirá este breve tutorial sobre alcohol al volante.
+        </p>
+    </div>`,
+
     'seg_academia': `<div class="info-card"><strong>🚗 Academia de Conductores</strong><br>Turnos para cursos y exámenes teóricos.<br>🔗 <a href="https://apps.chascomus.gob.ar/academia/" target="_blank">INGRESAR A LA WEB</a></div>`,
     'seg_medido': `<div class="info-card"><strong>🅿️ Estacionamiento Medido</strong><br>Gestioná tu estacionamiento desde el celular.<br><br>📲 <b>Descargar App:</b><br>🤖 <a href="https://play.google.com/store/apps/details?id=ar.edu.unlp.sem.mobile.chascomus" target="_blank">Android (Google Play)</a><br>🍎 <a href="https://apps.apple.com/ar/app/sem-mobile/id1387705895" target="_blank">iPhone (App Store)</a><br><br>💻 <a href="https://chascomus.gob.ar/estacionamientomedido/" target="_blank">Gestión vía Web</a></div>`,
     'lic_turno': `<b>📅 Turno Licencia:</b><br>🔗 <a href="https://apps.chascomus.gob.ar/academia/">SOLICITAR TURNO</a>`, 
     'seg_infracciones': `<b>⚖️ Infracciones:</b><br>🔗 <a href="https://chascomus.gob.ar/municipio/estaticas/consultaInfracciones">VER MIS MULTAS</a>`, 
-
+// Respuesta original de la policía con información detallada sobre el monitoreo, contacto directo a 
+// través de WhatsApp para emergencias y enlace rápido a la línea telefónica de la comisaría
     'poli': `
     <div class="info-card">
         <strong>🎥 (MONITOREO)</strong><br><br>
@@ -498,7 +553,24 @@ const RES = {
          🚔 <b>POLICIA:</b><br>
         Solicitalo a <a href="tel:422222"class="wa-btn" style="background-color:#25D366 !important; text-align:center;">📞 42-2222</a><br><br>`,
 
-    'politicas_gen': `<div class="info-card" style="border-left: 5px solid #9b59b6;"><strong style="color: #8e44ad; font-size: 1rem;">💜 Género y Diversidad</strong><br><br><div style="font-size: 0.85rem; margin-bottom: 12px;">🚨 <b>Guardia 24/7:</b> Orientación y acompañamiento en casos de violencia.<br>🧠 <b>Equipo Técnico:</b> Abogadas, psicólogas y trabajadoras sociales.<br>🏠 <b>Hogar de Tránsito:</b> Alojamiento temporal para mujeres en riesgo.<br>🗣️ <b>Varones:</b> Espacio de abordaje y deconstrucción de conductas violentas.<br>👮‍♀️ <b>Articulación:</b> Trabajo conjunto con Comisaría de la Mujer.</div><div style="background: #fdf2ff; padding: 10px; border-radius: 8px; font-size: 0.9rem;">📍 <b>Oficina:</b> Moreno 259 (Lun-Vie 9-14hs)<br>☎️ <b>Fijo Oficina:</b> <a href="tel:02241530448">2241-530448</a><br>🚓 <b>Comisaría Mujer:</b> <a href="tel:02241422653">42-2653</a></div><a href="https://wa.me/5492241559397" target="_blank" class="wa-btn" style="background-color: #8e44ad !important;">🚨 GUARDIA 24HS (WhatsApp)</a></div>`,
+        // Respuesta original de Turismo con información detallada sobre la subsecretaría, dirección, 
+        // contacto telefónico, correo electrónico y enlace a Linktree para más información sobre actividades turísticas
+    'turismo_info': `<div class="info-card"><strong>🏖️ Subsecretaría de Turismo</strong><br>📍 Av. Costanera España 25<br>📞 <a href="tel:02241615542">02241 61-5542</a><br>📧 <a href="mailto:turismo@chascomus.gob.ar">Enviar Email</a><br>🔗 <a href="https://linktr.ee/turismoch" target="_blank">Más info en Linktree</a></div>`,
+    'deportes_info': `<div class="info-card"><strong>⚽ Dirección de Deportes</strong><br>📍 Av. Costanera España y Av. Lastra<br>📞 <a href="tel:02241424649">(02241) 42 4649</a></div>`,
+    'deportes_circuito': `<div class="info-card"><strong>🏃 Circuito de Calle</strong><br>Inscripciones, cronograma y resultados oficiales.<br>🔗 <a href="https://apps.chascomus.gob.ar/deportes/circuitodecalle/" target="_blank">IR A LA WEB</a></div>`,
+  
+
+    'politicas_gen': `<div class="info-card" style="border-left: 5px solid #9b59b6;"><strong style="color: #8e44ad; font-size: 1rem;">
+    💜 Género y Diversidad</strong><br><br><div style="font-size: 0.85rem; margin-bottom: 12px;">
+    🚨 <b>Guardia 24/7:</b> Orientación y acompañamiento en casos de violencia.<br>
+    🧠 <b>Equipo Técnico:</b> Abogadas, psicólogas y trabajadoras sociales.<br>
+    🏠 <b>Hogar de Tránsito:</b> Alojamiento temporal para mujeres en riesgo.<br>
+    🗣️ <b>Varones:</b> Espacio de abordaje y deconstrucción de conductas violentas.<br>
+    👮‍♀️ <b>Articulación:</b> Trabajo conjunto con Comisaría de la Mujer.</div><div style="background: #fdf2ff; padding: 10px; border-radius: 8px; font-size: 0.9rem;">
+    📍 <b>Oficina:</b> Moreno 259 (Lun-Vie 9-14hs)<br>
+    ☎️ <b>Fijo Oficina:</b> <a href="tel:02241530448">2241-530448</a><br>
+    🚓 <b>Comisaría Mujer:</b> <a href="tel:02241422653">42-2653</a></div><a href="https://wa.me/5492241559397" target="_blank" class="wa-btn" style="background-color: #8e44ad !important;">
+    🚨 GUARDIA 24HS (WhatsApp)</a></div>`,
     
     /* --- TARJETA NUEVA: MÓDULOS ALIMENTARIOS (Estilo destacado) --- */
     'asistencia_social': `
@@ -513,7 +585,7 @@ const RES = {
             • Certificado médico (si corresponde a dieta celíaca).
         </div>
 
-        <div style="background: #fff3e0; padding: 10px; border-radius: 8px; font-size: 0.9rem; border: 1px solid #ffe0b2;">
+        <div style="background: #edb482ff; padding: 10px; border-radius: 8px; font-size: 0.9rem; border: 1px solid #ffe0b2;">
             📍 <b>Lugar de Retiro:</b><br>
             Depósito de calle Juárez (casi esquina Mazzini).<br><br>
             ⏰ <b>Horario:</b><br>
@@ -533,14 +605,22 @@ const RES = {
     'mediacion_info': `<div class="info-card"><strong>⚖️ Mediación Comunitaria</strong><br>Resolución pacífica y gratuita de conflictos vecinales (ruidos, mascotas, edilicios).<br>📍 <b>Acercate a:</b> Moreno 259.</div>`,
     'uda_info': `<div class="info-card"><strong>📍 Puntos UDA (Atención en Barrios)</strong><br><i>Acercate a tu punto más cercano:</i><br><br>🔹 <b>UDA 1 (San Luis):</b> Chubut 755 (Mar/Vie 9-12).<br>🔹 <b>UDA 2 (San José Obrero):</b> F. Chapa 625 (Mar/Vie 9-12).<br>🔹 <b>UDA 3 (El Porteño):</b> Mansilla y Calle 3 (Vie 9-12).<br>🔹 <b>UDA 4 (30 de Mayo):</b> Bvd. 5 y Calle 2 (Vie 9-12).<br>🔹 <b>UDA 5 (B. Jardín):</b> J. Quintana e/ Misiones (Mar/Mié 9-12).<br>🔹 <b>UDA 6 (Gallo Blanco):</b> EE.UU. y Las Flores (Lun 9-12).<br>🔹 <b>UDA 7 (San Cayetano):</b> Comedor (Mar 9-12).<br>🔹 <b>UDA 8 (Políticas Com.):</b> Sarmiento 42 (Lun-Vie 8-12).<br>🔹 <b>UDA 9 (Iporá):</b> Perú y S. Cabral (Jue 9-12).<br><br>🚨 <b>Guardia 24hs:</b> <a href="https://wa.me/5492241559397">2241-559397</a></div>`,
    
-    // --- OBRAS PÚBLICAS Y ATENCIÓN AL VECINO --- //
-
-    'poda': `<div class="info-card"><strong>🌿 Ingresa en este link 👇🏼</strong><br>🔗 <a href="https://apps.chascomus.gob.ar/podaresponsable/solicitud.php">🌳 Solicitud Poda</a></div>`,
-    'obras_basura': `<div class="info-card"><strong>♻️ Recolección de residuos</strong><br>Lun a Sáb 20hs (Húmedos)</strong><br>Jueves 14hs (Reciclables)`,
-    
     // --- TRÁMITES Y SERVICIOS MUNICIPALES --- //
 
     'hac_tomasa': `<div class="info-card"><strong>🌾 TOMASA:</b><br>ℹ️ Portal de autogestión.<br>🔗 <a href="https://tomasa.chascomus.gob.ar/">INGRESAR</a>`,
+
+    'deuda_video_info': `
+    <div class="info-card">
+        <strong>🎥 La muni Invierte</strong><br><br>
+        <video width="100%" height="auto" controls style="border-radius: 8px; border: 1px solid #ddd;">
+            <source src="videos/tasas.mp4" type="video/mp4">
+            Tu navegador no soporta el video.
+        </video>
+        <br><br>
+        <p style="font-size: 0.85rem; color: #555;">
+            Mirá este breve tutorial sobre cómo iniciar tu trámite de habilitación comercial 100% online.
+        </p>
+    </div>`,
     'boleta': `<div class="info-card"><strong>📧 BOLETA DIGITAL</strong><br>🟢 <i>Para inscribirse comomunicarce por estas vias</a><br> 
     📲: <a href="https://wa.me/5492241557616">2241-557616</a><br>📧 <a href="mailto:ingresospublicos@chascomus.gob.ar">Email</a></div>`,
     'agua': `<div class="info-card"><strong>💧 CONSUMO DE AGUA</strong><br> ℹ️ Para conocer y pagar su consumo ingrese a este Link</b><br>
@@ -562,19 +642,7 @@ const RES = {
         📍 <b>Presencial:</b> Maipú 415 (Producción).<br><br>
         🚀 <a href="https://apps.chascomus.gob.ar/habilitaciones/habilitacionComercial.php" target="_blank" class="wa-btn">INICIAR TRÁMITE ONLINE</a>
     </div>`,
-
-     'hab_video_info': `
-    <div class="info-card">
-        <strong>🎥 Guía de Habilitaciones</strong><br><br>
-        <video width="100%" height="auto" controls style="border-radius: 8px; border: 1px solid #ddd;">
-            <source src="videos/tutorial_habilitacion.mp4" type="video/mp4">
-            Tu navegador no soporta el video.
-        </video>
-        <br><br>
-        <p style="font-size: 0.85rem; color: #555;">
-            Mirá este breve tutorial sobre cómo iniciar tu trámite de habilitación comercial 100% online.
-        </p>
-    </div>`,
+// Respuesta original de Hábitat con información detallada sobre el trámite de habilitación comercial, 
     /* --- HABILITACIÓN EVENTOS Y ESPACIO PÚBLICO --- */
     'hab_eventos': `
     <div class="info-card">
@@ -619,10 +687,12 @@ const RES = {
     /* --- RESPUESTAS HOSPITAL MUNICIPAL --- */
     'h_turnos': `
     <div class="info-card">
-        <strong>📅 Turnos Hospital</strong><br>WhatsApp: <a href="https://wa.me/5492241466977">📲 2241-466977</a>`,
-    'h_info':  `
-    <div class="info-card">
-        <strong>📍 <b>Hospital Municipal:</b> Av. Alfonsín e Yrigoyen.<br>🚨 Guardia 24 hs.`,
+        <strong>📍 <b>Hospital Municipal:</b> Av. Alfonsín e Yrigoyen.<br>🚨 Guardia 24 hs.</strong><br>
+        <a href="https://wa.me/5492241466977" target="_blank" class="wa-btn" style="background-color: #efe8e3ff !important;">
+            📲 Consultar por turnos (WhatsApp)
+        </a>
+    </div>`, 
+    
     
     /* --- ESPECIALIDADES HOSPITAL (NUEVO ORDEN: Especialidad -> Día) --- */
     'info_pediatria': `
@@ -813,25 +883,23 @@ const RES = {
     📍 <b>Mesa de Entradas:</b><br>
     Cr. Cramer 270.</div>`
 };
-/* --- 5. MOTOR DE CHAT (FRASES PRESERVADAS) --- */
-const FRASES_RESPUESTA = [
-    "¡Excelente selección! ⭐", "¡Perfecto! 👍", "¡Genial! Te ayudo con eso 😊", "¡Buena opción! 🔍", "¡Excelente elección! 🎯"
-];
+
+
+/* --- 5. MOTOR DE CHAT --- */
+const FRASES_RESPUESTA = ["¡Excelente selección! ⭐", "¡Perfecto! 👍", "¡Genial! Te ayudo con eso 😊", "¡Buena opción! 🔍", "¡Excelente elección! 🎯"];
 function getFraseAleatoria() { return FRASES_RESPUESTA[Math.floor(Math.random() * FRASES_RESPUESTA.length)]; }
 
 function scrollToBottom() {
-    const container = document.querySelector('.chat-container');
-    container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'smooth' // Esto hace que el "correr" sea suave y elegante
-    });
+    const container = document.getElementById('chatMessages');
+    setTimeout(() => container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }), 50);
 }
 
 function showTyping() {
     isBotThinking = true;
     const container = document.getElementById('chatMessages');
     const typing = document.createElement('div');
-    typing.id = 'typingIndicator'; typing.className = 'typing-indicator';
+    typing.id = 'typingIndicator';
+    typing.className = 'typing-indicator nuevo-mensaje';
     typing.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
     container.appendChild(typing);
     scrollToBottom();
@@ -846,12 +914,22 @@ function removeTyping() {
 function addMessage(content, side = 'bot', options = null) {
     if (side === 'bot') removeTyping();
     const container = document.getElementById('chatMessages');
-    const row = document.createElement('div'); row.className = 'message-wrapper';
-    const div = document.createElement('div'); div.className = `message ${side}`;
+    const row = document.createElement('div'); 
+    row.className = 'message-wrapper';
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+
+    const div = document.createElement('div');
+    // Se añade 'nuevo-mensaje' para que el CSS dispare la animación
+    div.className = `message ${side} nuevo-mensaje`; 
+    
     if (side === 'user') div.textContent = content; else div.innerHTML = content;
+    
     row.appendChild(div);
+
     if (options) {
-        const optDiv = document.createElement('div'); optDiv.className = 'options-container';
+        const optDiv = document.createElement('div');
+        optDiv.className = 'options-container';
         options.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = `option-button ${opt.id === 'back' ? 'back' : ''}`;
@@ -861,10 +939,94 @@ function addMessage(content, side = 'bot', options = null) {
         });
         row.appendChild(optDiv);
     }
-    container.appendChild(row); scrollToBottom();
+
+    container.appendChild(row);
+    scrollToBottom();
 }
 
 function handleAction(opt) {
+    if (isBotThinking) return;
+    if (opt.id === 'back') { 
+        if (currentPath.length > 1) currentPath.pop(); 
+        showMenu(currentPath[currentPath.length - 1]); 
+        return; 
+    }
+    if (opt.link) { window.open(opt.link, '_blank'); return; }
+
+    addMessage(opt.label, 'user');
+
+    if (opt.type === 'barrio_select') {
+        userNeighborhood = opt.label;
+        localStorage.setItem('muni_user_neighborhood', userNeighborhood);
+        showTyping();
+        setTimeout(() => {
+            addMessage(`¡Excelente! ¿Cuál es tu edad?`, 'bot', [
+                {label:'-20', type:'age_select'}, {label:'20-40', type:'age_select'}, 
+                {label:'40-60', type:'age_select'}, {label:'+60', type:'age_select'}
+            ]);
+        }, 1200);
+        return;
+    }
+
+    showTyping();
+    // Tiempo de espera aumentado para simular escritura real
+    setTimeout(() => {
+        if (opt.type === 'leaf' || opt.apiKey) {
+            addMessage(RES[opt.apiKey] || "Información no disponible.", 'bot');
+            showNavControls();
+        } else if (MENUS[opt.id]) {
+            currentPath.push(opt.id);
+            showMenu(opt.id);
+        }
+    }, 1500); 
+}
+
+function showMenu(key) {
+    removeTyping();
+    const menu = MENUS[key];
+    const title = typeof menu.title === 'function' ? menu.title(userName) : menu.title;
+    let opts = [...menu.options];
+    if (currentPath.length > 1) opts.push({ id: 'back', label: '⬅️ Volver' });
+    addMessage(title, 'bot', opts);
+}
+
+function resetToMain() { 
+    currentPath = ['main']; 
+    showTyping(); 
+    setTimeout(() => showMenu('main'), 1000); 
+}
+
+/* --- INICIO --- */
+document.getElementById('sendButton').onclick = processInput;
+document.getElementById('userInput').onkeypress = (e) => { if(e.key === 'Enter') processInput(); };
+
+window.onload = () => { 
+    if (!userName) { 
+        showTyping(); 
+        setTimeout(() => addMessage("👋 Bienvenido a <b>MuniBot</b>. ¿Cuál es tu <b>nombre</b>?", 'bot'), 1200); 
+    } else {
+        resetToMain();
+    }
+};
+
+function toggleInfo() { document.getElementById('infoModal').classList.toggle('show'); }
+function clearSession() { if(confirm("¿Borrar datos?")) { localStorage.clear(); location.reload(); } }
+    
+function handleAction(opt) {
+    // Acción para desplegar la lista de barrios
+    if (opt.id === 'ver_lista_barrios') {
+        showTyping();
+        // Generamos la lista larga solo cuando el usuario la pide
+        const opcionesBarrios = BARRIOS_CHASCOMUS.map(b => ({ 
+            label: b, 
+            type: 'barrio_select' 
+        }));
+        setTimeout(() => {
+            addMessage("📍 Por favor, elegí tu barrio de la lista oficial:", "bot", opcionesBarrios);
+        }, 600);
+        return;
+    }
+    
     if (isBotThinking) return; 
     
     if (opt.id === 'back') { 
@@ -877,20 +1039,31 @@ function handleAction(opt) {
 
     addMessage(opt.label, 'user');
 
+    // REGISTRO DE BARRIO (Nuevo Handler)
+    if (opt.type === 'barrio_select') {
+        userNeighborhood = opt.label;
+        localStorage.setItem('muni_user_neighborhood', userNeighborhood);
+        registrarEvento("Registro", "Barrio: " + userNeighborhood);
+        showTyping();
+        
+        const edades = [{label:'-20', type:'age_select'}, {label:'20-40', type:'age_select'}, {label:'40-60', type:'age_select'}, {label:'+60', type:'age_select'}];
+        setTimeout(() => addMessage(`¡Excelente! <b>${userName}</b> de <b>${userNeighborhood}</b>. ¿Cuál es tu edad?`, 'bot', edades), 800);
+        return;
+    }
+
     // REGISTRO DE EDAD
     if (opt.type === 'age_select') {
         userAge = opt.label; 
         localStorage.setItem('muni_user_age', userAge);
-        registrarEvento("Registro", "Perfil Completo"); // Registra el fin del registro
+        registrarEvento("Registro", "Perfil Completo - Edad: " + userAge);
         showTyping();
         setTimeout(() => {
-            addMessage(`¡Gracias <b>${userName}</b>! Ya tengo tus datos. ¿En qué te ayudo hoy?`, 'bot');
+            addMessage(`¡Gracias <b>${userName}</b>! Ahora con tus datos. ¿En qué te ayudo hoy?`, 'bot');
             resetToMain();
         }, 1000);
         return;
     }
 
-    // REGISTRO DE CLICKS (Solo si no es volver ni registro)
     registrarEvento("Click", opt.label || opt.id);
 
     if (opt.type === 'form_147') return startReclamoForm();
@@ -901,7 +1074,8 @@ function handleAction(opt) {
         setTimeout(() => {
             addMessage(`${frase}<br>${RES[opt.apiKey] || "Información no disponible."}`, 'bot');
             showNavControls(); 
-        }, 800);
+        }, 2000); // <-- Cambialo de 800 a 2000 para que se vea el "Escribiendo..."
+    
     } else if (MENUS[opt.id]) {
         currentPath.push(opt.id);
         setTimeout(() => { addMessage(frase, 'bot'); showMenu(opt.id); }, 600);
@@ -950,7 +1124,7 @@ function finalizeForm() {
     showNavControls();
 }
 
-/* --- 7. BUSCADOR INTELIGENTE (DATA PRESERVADA) --- */
+/* --- 7. BUSCADOR INTELIGENTE Y PROCESAMIENTO --- */
 function ejecutarBusquedaInteligente(texto) {
    const diccionario = {
         'farmacia':   { type: 'leaf', apiKey: 'farmacias_lista', label: '💊 Farmacias' },
@@ -982,11 +1156,9 @@ function ejecutarBusquedaInteligente(texto) {
         'piscina':    { id: 'deportes', label: '⚽ Deportes' },
         'turismo':    { id: 'turismo', label: '🏖️ Turismo' },
         'turista':    { id: 'turismo', label: '🏖️ Turismo' },
-        'turismo':    { id: 'turismo', label: '🏖️ Turismo' },            
         'reba':       { type: 'leaf', apiKey: 'hab_reba', label: '🍷 REBA' },
         'alcohol':    { type: 'leaf', apiKey: 'hab_reba', label: '🍷 REBA' },
         'licencia':   { type: 'leaf', apiKey: 'lic_turno', label: '🪪 Licencias' },
-        'carnet':     { type: 'leaf', apiKey: 'lic_turno', label: '🪪 Licencias' },
         'carnet':     { type: 'leaf', apiKey: 'lic_turno', label: '🪪 Licencias' },
         'castracion': { type: 'leaf', apiKey: 'zoo_rabia', label: '🐾 Zoonosis' },
         'vacunacion': { type: 'leaf', apiKey: 'vacunacion_info', label: '💉 Vacunación' },
@@ -1046,17 +1218,38 @@ function ejecutarBusquedaInteligente(texto) {
 }
 
 function processInput() {
-    const input = document.getElementById('userInput'); const val = input.value.trim();
-    if(!val || isBotThinking) return;
-    if (isAwaitingForm) { addMessage(val, 'user'); input.value = ""; processFormStep(val); return; }
-    if (!userName) { userName = val; localStorage.setItem('muni_user_name', val); input.value = ""; showTyping(); setTimeout(() => addMessage(`¡Gusto conocerte <b>${userName}</b>! 👋 ¿De qué <b>barrio</b> sos?`, 'bot'), 800); return; }
+    const input = document.getElementById('userInput'); 
+    const val = input.value.trim();
+    if (!val || isBotThinking) return;
+
+    if (isAwaitingForm) { 
+        addMessage(val, 'user'); input.value = ""; processFormStep(val); return; 
+    }
+
+    // REGISTRO DE NOMBRE
+    if (!userName) { 
+        if (val.length < 3) return;
+        userName = val; 
+        localStorage.setItem('muni_user_name', val); 
+        registrarEvento("Registro", "Nombre: " + val); 
+        addMessage(val, 'user'); input.value = ""; showTyping(); 
+        
+        // FIX: Se envía solo un botón puente para los barrios
+        setTimeout(() => {
+            addMessage(`¡Gusto conocerte <b>${userName}</b>! 👋 Para continuar, necesitamos saber tu barrio para mejorar la atención:`, 'bot', [
+                { id: 'ver_lista_barrios', label: '🏙️ Seleccionar mi Barrio' }
+            ]);
+        }, 800); 
+        return; 
+    }
+
     if (!userNeighborhood) { 
-        userNeighborhood = val; localStorage.setItem('muni_user_neighborhood', val); input.value = ""; showTyping();
-        const edades = [{label:'-20', type:'age_select'}, {label:'20-40', type:'age_select'}, {label:'40-60', type:'age_select'}, {label:'+60', type:'age_select'}];
-        setTimeout(() => addMessage(`¡Genial! <b>${userName}</b>, ¿cuál es tu rango de edad?`, 'bot', edades), 800);
+        addMessage(val, 'user'); input.value = ""; showTyping();
+        setTimeout(() => addMessage("⚠️ Por favor, seleccioná tu barrio tocando el botón de arriba.", 'bot'), 600);
         return;
     }
-    addMessage(val, 'user'); registrarEvento("Escribió", val); input.value = ""; ejecutarBusquedaInteligente(val.toLowerCase());
+
+    addMessage(val, 'user'); registrarEvento("Búsqueda", val); input.value = ""; ejecutarBusquedaInteligente(val.toLowerCase());
 }
 
 /* --- 8. CARGA --- */
@@ -1064,18 +1257,7 @@ document.getElementById('sendButton').onclick = processInput;
 document.getElementById('userInput').onkeypress = (e) => { if(e.key === 'Enter') processInput(); };
 function toggleInput(show) { document.getElementById('inputBar').style.display = show ? 'flex' : 'none'; }
 function toggleInfo() { document.getElementById('infoModal').classList.toggle('show'); }
-function clearSession() { 
-    if(confirm("¿Borrar datos?")) { 
-        localStorage.clear(); 
-        // Pequeño delay para asegurar que el storage se limpie antes de recargar
-        setTimeout(() => {
-            window.location.href = window.location.pathname + '?refresh=' + Date.now();
-        }, 100);
-    } 
-}
+function clearSession() { if(confirm("¿Borrar datos?")) { localStorage.clear(); location.reload(); } }
 
-window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido. Para empezar, ¿cual es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
+window.onload = () => { if (!userName) { showTyping(); setTimeout(() => addMessage("👋 Bienvenido a <b>MuniBot</b>. Para empezar, ¿cuál es tu <b>nombre</b>?", 'bot'), 600); } else resetToMain(); };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-
-
-
